@@ -19,4 +19,111 @@ model Test {
   email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("tests")
 }
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  AGENT
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum StudyLevel {
+  BACHELORS
+  MASTERS
+  PHD
+  DIPLOMA
+}
+
+enum InstitutionType {
+  UNIVERSITY
+  COLLEGE
+  SCHOOL
+  INSTITUTE
+}
+
+model User {
+  id            String    @id // Supabase UUID
+  firstName     String?
+  lastName      String?
+  email         String    @unique
+  role          UserRole  @default(STUDENT)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  student       Student?
+  agent         Agent?
+
+  @@map("users")
+}
+
+model Student {
+  id                    String    @id
+  user                  User      @relation(fields: [id], references: [id], onDelete: Cascade)
+  
+  // Academic & Background
+  nationality           String?
+  currentEducationLevel String?   
+  currentInstitution    String?
+  fieldOfStudy          String?   
+  gpa                   Float?
+  graduationDate        DateTime?
+
+  // Questionnaire Preferences
+  preferredDestination  String?   
+  preferredProgram      String?   
+  preferredStudyLevel   StudyLevel?
+  preferredIntake       String?
+
+  // English & Identity
+  englishTest           String?   
+  englishScore          String?   
+  hasValidPassport      Boolean   @default(false)
+
+  // Document Readiness Checklist
+  hasAcademicTranscripts   Boolean @default(false)
+  hasRecommendationLetters Boolean @default(false)
+  hasPersonalStatement     Boolean @default(false)
+
+  // Narrative Details
+  workExperience        String?   @db.Text
+  extraCurricular       String?   @db.Text
+  careerGoals           String?   @db.Text
+
+  // Communication & CRM
+  referralSource        String?   
+  preferredContactMethod String?
+  bestTimeToContact     String?
+  additionalQuestions   String?   @db.Text
+
+  @@map("students")
+}
+
+model Agent {
+  id        String @id
+  user      User   @relation(fields: [id], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("agents")
+}
+
+
