@@ -23,13 +23,7 @@ export class AuthService {
   constructor(private prisma: PrismaService) {}
 
   async register(registerDto: RegisterDto) {
-    const {
-      email,
-      password,
-      firstName,
-      lastName,
-      role = UserRole.STUDENT,
-    } = registerDto;
+    const { email, password, firstName, lastName, role, phone } = registerDto;
 
     try {
       const { data, error }: AuthResponse = await this.supabase.auth.signUp({
@@ -62,6 +56,7 @@ export class AuthService {
           firstName,
           lastName,
           role,
+          phone: phone ?? null,
         },
       });
 
@@ -73,6 +68,7 @@ export class AuthService {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          phone: user.phone,
         },
       };
     } catch (error: unknown) {
