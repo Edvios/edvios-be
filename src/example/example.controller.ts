@@ -11,6 +11,7 @@ import {
 import { JwtAuthGuard, RoleGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { UserRole } from '@prisma/client';
+import type { AuthUser } from '../auth/types';
 
 /**
  * Example controller showing how to use authentication guards and decorators
@@ -27,7 +28,7 @@ export class ExampleController {
   // Protected route - requires authentication
   @Get('protected')
   @UseGuards(JwtAuthGuard)
-  getProtectedData(@CurrentUser() user: any) {
+  getProtectedData(@CurrentUser() user: AuthUser) {
     return {
       message: 'This is protected data',
       accessedBy: user.email,
@@ -39,7 +40,7 @@ export class ExampleController {
   @Get('admin-panel')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
-  getAdminPanel(@CurrentUser() user: any) {
+  getAdminPanel(@CurrentUser() user: AuthUser) {
     return {
       message: 'Welcome to admin panel',
       admin: user.email,
@@ -50,7 +51,10 @@ export class ExampleController {
   @Post('manage-users')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN, UserRole.AGENT)
-  manageUsers(@Body() data: any, @CurrentUser() user: any) {
+  manageUsers(
+    @Body() data: Record<string, unknown>,
+    @CurrentUser() user: AuthUser,
+  ) {
     return {
       message: 'User management action performed',
       performedBy: user.email,
@@ -63,7 +67,7 @@ export class ExampleController {
   @Get('student-dashboard')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.STUDENT)
-  getStudentDashboard(@CurrentUser() user: any) {
+  getStudentDashboard(@CurrentUser() user: AuthUser) {
     return {
       message: 'Welcome to student dashboard',
       studentEmail: user.email,
@@ -76,8 +80,8 @@ export class ExampleController {
   @Roles(UserRole.ADMIN, UserRole.AGENT, UserRole.STUDENT)
   updateResource(
     @Param('id') id: string,
-    @Body() data: any,
-    @CurrentUser() user: any,
+    @Body() data: Record<string, unknown>,
+    @CurrentUser() user: AuthUser,
   ) {
     // You can implement different logic based on user role
     if (user.role === UserRole.ADMIN) {
@@ -85,14 +89,17 @@ export class ExampleController {
     } else if (user.role === UserRole.AGENT) {
       return { message: 'Agent can update assigned resources', resourceId: id };
     } else {
-      return { message: 'Student can only update own resources', resourceId: id };
+      return {
+        message: 'Student can only update own resources',
+        resourceId: id,
+      };
     }
   }
 
   // Get current user info
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getCurrentUserInfo(@CurrentUser() user: any) {
+  getCurrentUserInfo(@CurrentUser() user: AuthUser) {
     return {
       userId: user.userId,
       email: user.email,
@@ -104,7 +111,7 @@ export class ExampleController {
   @Delete('delete-resource/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
-  deleteResource(@Param('id') id: string, @CurrentUser() user: any) {
+  deleteResource(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return {
       message: 'Resource deleted by admin',
       deletedBy: user.email,

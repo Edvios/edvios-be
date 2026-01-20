@@ -5,47 +5,63 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterDto } from './dto';
-import { createClient } from '@supabase/supabase-js';
+import {
+  AuthResponse,
+  createClient,
+  SupabaseClient,
+} from '@supabase/supabase-js';
 import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
-  private supabase;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  private readonly supabase: SupabaseClient = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
+  );
 
-  constructor(private prisma: PrismaService) {
-    this.supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!,
-    );
-  }
+  constructor(private prisma: PrismaService) {}
 
   async register(registerDto: RegisterDto) {
-    const { email, password, name, role = UserRole.STUDENT } = registerDto;
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      role = UserRole.STUDENT,
+    } = registerDto;
 
     try {
-      // Create user in Supabase Auth
-      const { data, error } = await this.supabase.auth.signUpWithPassword({
+      const { data, error }: AuthResponse = await this.supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name,
+            firstName,
+            lastName,
             role,
           },
         },
       });
 
       if (error) {
+        console.error('Supabase signUp error:', error);
         throw new BadRequestException(error.message);
       }
 
-      // Create user record in database
+      const supabaseId = data.user?.id;
+
+      if (!supabaseId) {
+        throw new BadRequestException('Supabase did not return a user id');
+      }
+
       const user = await this.prisma.user.create({
         data: {
+          id: supabaseId,
           email,
-          name,
+          firstName,
+          lastName,
           role,
-          supabaseId: data.user.id,
         },
       });
 
@@ -54,14 +70,15 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           role: user.role,
         },
       };
-    } catch (error) {
-      throw new BadRequestException(
-        error.message || 'Registration failed',
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Registration failed';
+      throw new BadRequestException(message);
     }
   }
 
@@ -70,13 +87,18 @@ export class AuthService {
 
     try {
       // Authenticate with Supabase
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error }: AuthResponse =
+        await this.supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
       if (error) {
         throw new UnauthorizedException('Invalid email or password');
+      }
+
+      if (!data.session) {
+        throw new UnauthorizedException('No session returned');
       }
 
       // Get user from database to include role
@@ -95,27 +117,29 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           role: user.role,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      throw new UnauthorizedException(
-        error.message || 'Authentication failed',
-      );
+      const message =
+        error instanceof Error ? error.message : 'Authentication failed';
+      throw new UnauthorizedException(message);
     }
   }
 
   async refreshToken(refreshToken: string) {
     try {
-      const { data, error } = await this.supabase.auth.refreshSession({
-        refresh_token: refreshToken,
-      });
+      const { data, error }: AuthResponse =
+        await this.supabase.auth.refreshSession({
+          refresh_token: refreshToken,
+        });
 
-      if (error) {
+      if (error || !data.session) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
@@ -123,7 +147,7 @@ export class AuthService {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
       };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Token refresh failed');
     }
   }
@@ -138,5 +162,51 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async changeUserRole(userId: string, newRole: UserRole) {
+    try {
+      // Update role in Prisma database
+      const user = await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: newRole },
+      });
+
+      // Update user metadata in Supabase Auth with service role key
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const supabaseAdmin: SupabaseClient = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      );
+
+      const { error: updateError } =
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          user_metadata: {
+            role: newRole,
+          },
+        });
+
+      if (updateError) {
+        console.error('Error updating user metadata:', updateError);
+        throw new BadRequestException(
+          'Failed to update user metadata in Supabase',
+        );
+      }
+
+      return {
+        message: 'User role updated successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+      };
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to change user role';
+      throw new BadRequestException(message);
+    }
   }
 }
