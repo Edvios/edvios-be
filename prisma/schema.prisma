@@ -67,7 +67,7 @@ enum InstitutionStatus {
 }
 
 enum PartnershipType {
-  PRIMIEM
+  PREMIUM
   STANDARD
   BASIC
 }
@@ -188,12 +188,14 @@ model Program {
   id                   String        @id @default(uuid())
   title                String
   level                String
-  intake               String
+  intake               Intake?       @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  intakeId             String?
   duration             String
   tuitionFee           String
   applicationFee       String
   englishTestScore     String
-  subject              String
+  subject              Subject?       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId            String?
   scholarship          Boolean
   lastUpdated          DateTime
   applicationDeadline  DateTime
@@ -209,6 +211,28 @@ model Program {
   updatedAt            DateTime     @updatedAt
 
   @@index([institutionId])
+}
+
+model Subject {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programs  Program[]
+
+  @@map("subjects")
+}
+
+model Intake {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programs  Program[]
+
+  @@map("intakes")
 }
 
 

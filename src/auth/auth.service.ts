@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto, RegisterDto } from './dto';
+import { CreateUserDto, LoginDto, RegisterDto } from './dto';
 import {
   AuthResponse,
   createClient,
@@ -75,6 +75,38 @@ export class AuthService {
       const message =
         error instanceof Error ? error.message : 'Registration failed';
       throw new BadRequestException(message);
+    }
+  }
+
+  async createUser(createUserDto: CreateUserDto, creatorUserId: string) {
+    const { email, firstName, lastName, role, phone } = createUserDto;
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          id: creatorUserId,
+          email,
+          firstName,
+          lastName,
+          role,
+          phone: phone ?? null,
+        },
+      });
+
+      return {
+        message: 'User registered successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          phone: user.phone,
+        },
+      };
+    } catch (error) {
+      console.error('Supabase createUser error:', error);
+      throw new BadRequestException(error.message);
     }
   }
 

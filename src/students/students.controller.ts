@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
@@ -42,13 +43,13 @@ export class StudentsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.STUDENT)
-  update(@Param('id') id: string, @Body() dto: UpdateStudentDto) {
-    return this.studentsService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateStudentDto, @Req() req) {
+    return this.studentsService.update(id, dto, req.user);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.studentsService.remove(id);
   }

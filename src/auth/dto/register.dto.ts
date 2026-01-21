@@ -8,3 +8,11 @@ export class RegisterDto {
   role?: UserRole;
   phone?: string | null;
 }
+
+export class CreateUserDto {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role?: UserRole;
+  phone?: string | null;
+}
