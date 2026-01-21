@@ -37,39 +37,14 @@ export class AuthService {
           },
         },
       });
-
+      console.log('Supabase signUp data:', data, phone);
       if (error) {
         console.error('Supabase signUp error:', error);
         throw new BadRequestException(error.message);
       }
 
-      const supabaseId = data.user?.id;
-
-      if (!supabaseId) {
-        throw new BadRequestException('Supabase did not return a user id');
-      }
-
-      const user = await this.prisma.user.create({
-        data: {
-          id: supabaseId,
-          email,
-          firstName,
-          lastName,
-          role,
-          phone: phone ?? null,
-        },
-      });
-
       return {
         message: 'User registered successfully',
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          phone: user.phone,
-        },
       };
     } catch (error: unknown) {
       const message =
@@ -106,7 +81,7 @@ export class AuthService {
       };
     } catch (error) {
       console.error('Supabase createUser error:', error);
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(error);
     }
   }
 
@@ -129,26 +104,17 @@ export class AuthService {
         throw new UnauthorizedException('No session returned');
       }
 
-      // Get user from database to include role
-      const user = await this.prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
       return {
         message: 'Login successful',
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-        },
+        // user: {
+        //   id: user.id,
+        //   email: user.email,
+        //   firstName: user.firstName,
+        //   lastName: user.lastName,
+        //   role: user.role,
+        // },
       };
     } catch (error: unknown) {
       if (error instanceof UnauthorizedException) {

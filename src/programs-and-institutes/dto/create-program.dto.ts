@@ -36,7 +36,7 @@ export class CreateProgramDto {
   scholarship: boolean;
 
   @IsDateString()
-  applicationDeadline: string;
+  applicationDeadline: string | Date;
 
   @IsOptional()
   @IsString()

@@ -15,6 +15,7 @@ import { JwtAuthGuard, RoleGuard } from './guards';
 import { Roles, CurrentUser } from './decorators';
 import { UserRole } from '@prisma/client';
 import type { AuthUser } from './types';
+import { JwtStrategyReturnDto } from './dto/jwt-stratergy-return.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -28,7 +29,10 @@ export class AuthController {
   @Post('create-user')
   @UseGuards(JwtAuthGuard)
   async createUser(@Body() createUserDto: CreateUserDto, @Req() req) {
-    return this.authService.createUser(createUserDto, req.user.userId);
+    return this.authService.createUser(
+      createUserDto,
+      (req as { user: JwtStrategyReturnDto }).user.userId,
+    );
   }
 
   @Post('login')

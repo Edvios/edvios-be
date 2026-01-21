@@ -6,32 +6,20 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class IntakesService {
   constructor(private readonly prisma: PrismaService) {}
   async create(createIntakeDto: CreateIntakeDto) {
-    try {
-      return await this.prisma.intake.create({
-        data: {
-          name: createIntakeDto.name,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
+    return await this.prisma.intake.create({
+      data: {
+        name: createIntakeDto.name,
+      },
+    });
   }
 
   async findAll() {
-    try {
-      return await this.prisma.intake.findMany();
-    } catch (error) {
-      throw error;
-    }
+    return await this.prisma.intake.findMany();
   }
 
   async remove(id: string) {
-    try {
-      return await this.prisma.intake.delete({
-        where: { id },
-      });
-    } catch (error) {
-      throw error;
-    }
+    return await this.prisma.intake.delete({
+      where: { id },
+    });
   }
 }

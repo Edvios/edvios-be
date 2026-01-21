@@ -6,34 +6,22 @@ export class SubjectService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createSubject(name: string) {
-    try {
-      const newSubject = await this.prisma.subject.create({
-        data: {
-          name: name,
-        },
-      });
-      return newSubject;
-    } catch (error) {
-      throw error;
-    }
+    const newSubject = await this.prisma.subject.create({
+      data: {
+        name: name,
+      },
+    });
+    return newSubject;
   }
   async getAllSubjects() {
-    try {
-      const subjects = await this.prisma.subject.findMany();
-      return subjects;
-    } catch (error) {
-      throw error;
-    }
+    const subjects = await this.prisma.subject.findMany();
+    return subjects;
   }
 
   async deleteSubject(id: string) {
-    try {
-      await this.prisma.subject.delete({
-        where: { id },
-      });
-      return { message: `Subject with ID ${id} deleted successfully` };
-    } catch (error) {
-      throw error;
-    }
+    await this.prisma.subject.delete({
+      where: { id },
+    });
+    return { message: `Subject with ID ${id} deleted successfully` };
   }
 }

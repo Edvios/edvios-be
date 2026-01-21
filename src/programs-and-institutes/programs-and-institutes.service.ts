@@ -227,11 +227,11 @@ export class ProgramsAndInstitutesService {
       }
     }
 
-    const updateData: any = { ...data };
+    const updateData: UpdateProgramDto = { ...data };
     if (data.applicationDeadline) {
       updateData.applicationDeadline = new Date(data.applicationDeadline);
     }
-    updateData.lastUpdated = new Date();
+    updateData.updatedAt = new Date();
 
     return await this.prisma.program.update({
       where: { id },
@@ -306,7 +306,7 @@ export class ProgramsAndInstitutesService {
     const skip = (page - 1) * size;
 
     // Build dynamic `where` object based on filters
-    const where: any = {};
+    const where: { [key: string]: unknown } = {};
 
     // Program-level filters
     if (filters.search) {
@@ -336,11 +336,12 @@ export class ProgramsAndInstitutesService {
     // Institution-level filters
     if (filters.institutionId || filters.country) {
       where.institution = {};
+      const institutionFilter = where.institution as { [key: string]: string };
       if (filters.institutionId) {
-        where.institution.id = filters.institutionId;
+        institutionFilter.id = filters.institutionId;
       }
       if (filters.country) {
-        where.institution.country = filters.country;
+        institutionFilter.country = filters.country;
       }
     }
 

@@ -53,10 +53,7 @@ export class StudentsService {
   async update(id: string, dto: UpdateStudentDto, currentUser) {
     // Ensure the student exists
     await this.ensureStudent(id);
-
-    console.log('Current User:', currentUser);
-    console.log('Target Student ID:', id);
-    if (currentUser.userId !== id) {
+    if ((currentUser as { userId: string }).userId !== id) {
       throw new BadRequestException(`You can only update your own profile`);
     }
 

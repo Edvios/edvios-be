@@ -43,8 +43,16 @@ export class StudentsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.STUDENT)
-  update(@Param('id') id: string, @Body() dto: UpdateStudentDto, @Req() req) {
-    return this.studentsService.update(id, dto, req.user);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateStudentDto,
+    @Req() req: any,
+  ) {
+    return this.studentsService.update(
+      id,
+      dto,
+      (req as { user: unknown }).user,
+    );
   }
 
   @Delete(':id')
