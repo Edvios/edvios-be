@@ -7,13 +7,15 @@ import {
   Patch,
   Param,
   UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto } from './dto';
+import { CreateUserDto, LoginDto, RegisterDto } from './dto';
 import { JwtAuthGuard, RoleGuard } from './guards';
 import { Roles, CurrentUser } from './decorators';
 import { UserRole } from '@prisma/client';
 import type { AuthUser } from './types';
+import { JwtStrategyReturnDto } from './dto/jwt-stratergy-return.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -22,6 +24,15 @@ export class AuthController {
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
+  }
+
+  @Post('create-user')
+  @UseGuards(JwtAuthGuard)
+  async createUser(@Body() createUserDto: CreateUserDto, @Req() req) {
+    return this.authService.createUser(
+      createUserDto,
+      (req as { user: JwtStrategyReturnDto }).user.userId,
+    );
   }
 
   @Post('login')

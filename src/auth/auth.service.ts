@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto, RegisterDto } from './dto';
+import { CreateUserDto, LoginDto, RegisterDto } from './dto';
 import {
   AuthResponse,
   createClient,
@@ -37,21 +37,29 @@ export class AuthService {
           },
         },
       });
-
+      console.log('Supabase signUp data:', data, phone);
       if (error) {
         console.error('Supabase signUp error:', error);
         throw new BadRequestException(error.message);
       }
 
-      const supabaseId = data.user?.id;
+      return {
+        message: 'User registered successfully',
+      };
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Registration failed';
+      throw new BadRequestException(message);
+    }
+  }
 
-      if (!supabaseId) {
-        throw new BadRequestException('Supabase did not return a user id');
-      }
+  async createUser(createUserDto: CreateUserDto, creatorUserId: string) {
+    const { email, firstName, lastName, role, phone } = createUserDto;
 
+    try {
       const user = await this.prisma.user.create({
         data: {
-          id: supabaseId,
+          id: creatorUserId,
           email,
           firstName,
           lastName,
@@ -71,10 +79,9 @@ export class AuthService {
           phone: user.phone,
         },
       };
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Registration failed';
-      throw new BadRequestException(message);
+    } catch (error) {
+      console.error('Supabase createUser error:', error);
+      throw new BadRequestException(error);
     }
   }
 
@@ -97,26 +104,17 @@ export class AuthService {
         throw new UnauthorizedException('No session returned');
       }
 
-      // Get user from database to include role
-      const user = await this.prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
       return {
         message: 'Login successful',
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-        },
+        // user: {
+        //   id: user.id,
+        //   email: user.email,
+        //   firstName: user.firstName,
+        //   lastName: user.lastName,
+        //   role: user.role,
+        // },
       };
     } catch (error: unknown) {
       if (error instanceof UnauthorizedException) {

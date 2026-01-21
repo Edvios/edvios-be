@@ -50,9 +50,12 @@ export class StudentsService {
     return student;
   }
 
-  async update(id: string, dto: UpdateStudentDto) {
+  async update(id: string, dto: UpdateStudentDto, currentUser) {
     // Ensure the student exists
     await this.ensureStudent(id);
+    if ((currentUser as { userId: string }).userId !== id) {
+      throw new BadRequestException(`You can only update your own profile`);
+    }
 
     const studentData = this.mapStudentData(dto);
 
