@@ -11,10 +11,10 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateStudentDto) {
+  async create(dto: CreateStudentDto,  creatorUserId: string) {
     const studentData = this.mapStudentData(dto);
 
-    if (!dto.userId) {
+    if (!creatorUserId) {
       throw new BadRequestException(
         'Provide either nested `user` or `userId` to link an existing user',
       );
@@ -22,16 +22,16 @@ export class StudentsService {
 
     // Optionally verify user exists
     const exists = await this.prisma.user.findUnique({
-      where: { id: dto.userId },
+      where: { id: creatorUserId },
     });
     if (!exists) {
-      throw new NotFoundException(`User ${dto.userId} not found`);
+      throw new NotFoundException(`User ${creatorUserId} not found`);
     }
 
     return this.prisma.student.create({
       data: {
         ...studentData,
-        user: { connect: { id: dto.userId } },
+        user: { connect: { id: creatorUserId } },
       },
       include: { user: true },
     });
@@ -82,6 +82,11 @@ export class StudentsService {
 
   private mapStudentData(dto: Partial<CreateStudentDto | UpdateStudentDto>) {
     return {
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      email: dto.email,
+      phone: dto.phone ?? null,
+      address: dto.address ?? null,
       nationality: dto.nationality ?? null,
       currentEducationLevel: dto.currentEducationLevel ?? null,
       currentInstitution: dto.currentInstitution ?? null,

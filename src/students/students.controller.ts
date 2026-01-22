@@ -16,6 +16,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RoleGuard } from 'src/auth/guards/role.guard';
 import { Roles } from 'src/auth/decorators';
 import { UserRole } from '@prisma/client';
+import { JwtStrategyReturnDto } from 'src/auth/dto/jwt-stratergy-return.dto';
 
 @Controller('students')
 export class StudentsController {
@@ -23,8 +24,8 @@ export class StudentsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() dto: CreateStudentDto) {
-    return this.studentsService.create(dto);
+  create(@Body() dto: CreateStudentDto, @Req() req) {
+    return this.studentsService.create(dto, (req as { user: JwtStrategyReturnDto }).user.userId,);
   }
 
   @Get()

@@ -1,8 +1,9 @@
 export class CreateStudentDto {
-  // Option 2: Link to existing user
-  userId?: string;
-
-  // Student fields (all optional)
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string | null;
+  address?: string | null; 
   nationality?: string | null;
   currentEducationLevel?: string | null;
   currentInstitution?: string | null;
