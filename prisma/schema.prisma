@@ -99,7 +99,12 @@ model User {
 model Student {
   id                    String    @id
   user                  User      @relation(fields: [id], references: [id], onDelete: Cascade)
-  
+  firstName           String?
+  lastName            String?
+  email               String ?   @unique
+  phone               String?
+  address             String?
+
   // Academic & Background
   nationality           String?
   currentEducationLevel String?   
@@ -142,6 +147,7 @@ model Student {
   scholarshipInterest Boolean   @default(false)
   marketingConsent    Boolean   @default(false)
   
+  createdAt           DateTime  @default(now())
 
   @@map("students")
 }
