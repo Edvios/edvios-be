@@ -33,8 +33,8 @@ export class ProgramsAndInstitutesController {
   // ============= Institute Endpoints =============
 
   @Post('institutes')
-  // @UseGuards(JwtAuthGuard, RoleGuard)
-  // @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
   @HttpCode(HttpStatus.CREATED)
   async createInstitute(@Body() createInstituteDto: CreateInstituteDto) {
     return await this.programsAndInstitutesService.createInstitute(

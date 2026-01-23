@@ -203,4 +203,41 @@ export class AuthService {
       throw new BadRequestException(message);
     }
   }
+
+  async getPendingAgents() {
+    const pendingAgents = await this.prisma.user.findMany({
+      where: { role: UserRole.PENDING_AGENT },
+    });
+    return pendingAgents;
+  }
+
+ async deleteUser(userId: string) {
+  const supabaseAdmin: SupabaseClient = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+
+  try {
+    const { error: supabaseError } =
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+
+    if (supabaseError) {
+      throw new Error(supabaseError.message);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+
+    return { message: 'User deleted successfully' };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to delete user';
+
+    throw new BadRequestException(message);
+  }
+}
+
 }
