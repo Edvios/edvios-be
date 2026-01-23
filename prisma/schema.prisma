@@ -19,4 +19,227 @@ model Test {
   email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("tests")
 }
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  AGENT
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum StudyLevel {
+  BACHELORS
+  MASTERS
+  PHD
+  DIPLOMA
+}
+
+enum InstitutionType {
+  UNIVERSITY
+  COLLEGE
+  SCHOOL
+  INSTITUTE
+}
+
+
+enum InstitutionStatus {
+  ACTIVE
+  PENDING
+  INACTIVE
+}
+
+enum PartnershipType {
+  PREMIUM
+  STANDARD
+  BASIC
+}
+
+enum ProgramStatus {
+  AVAILABLE
+  DEADLINE_PASSED
+  FULL
+}
+
+
+model User {
+  id            String    @id // Supabase UUID
+  firstName     String?
+  lastName      String?
+  email         String    @unique
+  role          UserRole  @default(STUDENT)
+  status        UserStatus @default(ACTIVE)
+  phone         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  student       Student?
+  agent         Agent?
+
+  @@map("users")
+}
+
+model Student {
+  id                    String    @id
+  user                  User      @relation(fields: [id], references: [id], onDelete: Cascade)
+  firstName           String?
+  lastName            String?
+  email               String ?   @unique
+  phone               String?
+  address             String?
+
+  // Academic & Background
+  nationality           String?
+  currentEducationLevel String?   
+  currentInstitution    String?
+  fieldOfStudy          String?   
+  gpa                   Float?
+  graduationDate        DateTime?
+
+  // Questionnaire Preferences
+  preferredDestination  String?   
+  preferredProgram      String?   
+  preferredStudyLevel   StudyLevel?
+  preferredIntake       String?
+
+  // English & Identity
+  englishTest           String?   
+  englishScore          String?   
+  hasValidPassport      Boolean   @default(false)
+
+  // Document Readiness Checklist
+  hasAcademicTranscripts   Boolean @default(false)
+  hasRecommendationLetters Boolean @default(false)
+  hasPersonalStatement     Boolean @default(false)
+
+  // Narrative Details
+  workExperience        String?   @db.Text
+  extraCurricular       String?   @db.Text
+  careerGoals           String?   @db.Text
+
+  // Communication & CRM
+  referralSource        String?   
+  preferredContactMethod String?
+  bestTimeToContact     String?
+  additionalQuestions   String?   @db.Text
+
+  dob                  DateTime?
+  currentCountry      String?
+  currentCity         String?
+  budgetRange         String?
+  scholarshipInterest Boolean   @default(false)
+  marketingConsent    Boolean   @default(false)
+  
+  createdAt           DateTime  @default(now())
+
+  @@map("students")
+}
+
+model Agent {
+  id        String @id
+  user      User   @relation(fields: [id], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("agents")
+}
+
+model Institution {
+  id                    String            @id @default(uuid())
+  name                  String
+  type                  InstitutionType
+  country               String
+  city                  String
+  ranking               Int
+  establishedYear       Int
+  totalStudents         Int
+  internationalStudents Int
+  programsCount         Int
+  tuitionRange          String
+  status                InstitutionStatus
+  partnership           PartnershipType
+  contactEmail          String
+  website               String
+  logo                  String?
+  description           String
+
+  specialties           String[]
+  accreditations        String[]
+  applicationDeadlines  String[]
+
+  programs              Program[]
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+}
+  
+model Program {
+  id                   String        @id @default(uuid())
+  title                String
+  level                String
+  intake               Intake?       @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  intakeId             String?
+  duration             String
+  tuitionFee           String
+  applicationFee       String
+  englishTestScore     String
+  subject              Subject?       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId            String?
+  scholarship          Boolean
+  lastUpdated          DateTime
+  applicationDeadline  DateTime
+  ucasCode             String?
+  englishWaiver        Boolean
+  popularityRank       Int
+  status               ProgramStatus
+
+  institutionId        String
+  institution          Institution  @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([institutionId])
+}
+
+model Subject {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programs  Program[]
+
+  @@map("subjects")
+}
+
+model Intake {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programs  Program[]
+
+  @@map("intakes")
+}
+
+
+
