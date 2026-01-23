@@ -28,6 +28,8 @@ enum UserRole {
   ADMIN
   AGENT
   STUDENT
+  PENDING_AGENT
+  REJECTED_AGENT
 }
 
 enum UserStatus {
