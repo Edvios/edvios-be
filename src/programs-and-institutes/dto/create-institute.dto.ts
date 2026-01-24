@@ -76,8 +76,4 @@ export class CreateInstituteDto {
   @IsArray()
   @IsString({ each: true })
   accreditations: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  applicationDeadlines: string[];
 }

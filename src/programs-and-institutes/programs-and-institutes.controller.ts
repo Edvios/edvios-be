@@ -50,6 +50,13 @@ export class ProgramsAndInstitutesController {
     );
   }
 
+  //get total count of institutes
+  @Get('institutes/count')
+  @UseGuards(JwtAuthGuard)
+  async getInstitutesCount() {
+    return await this.programsAndInstitutesService.getInstitutesCount();
+  }
+
   @Get('institutes/:id')
   @UseGuards(JwtAuthGuard)
   async getInstituteById(@Param('id') id: string) {
@@ -97,6 +104,13 @@ export class ProgramsAndInstitutesController {
     return await this.programsAndInstitutesService.getAllPrograms(
       paginationQuery,
     );
+  }
+
+  //get total count of programs
+  @Get('programs/count')
+  @UseGuards(JwtAuthGuard)
+  async getProgramsCount() {
+    return await this.programsAndInstitutesService.getProgramsCount();
   }
 
   //get initial program data for dropdowns

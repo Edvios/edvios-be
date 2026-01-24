@@ -184,8 +184,6 @@ model Institution {
 
   specialties           String[]
   accreditations        String[]
-  applicationDeadlines  String[]
-
   programs              Program[]
 
   createdAt             DateTime          @default(now())

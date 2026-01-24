@@ -1,0 +1,19 @@
+import { IsOptional, IsInt, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class studentsGetQueryDto {
+  @IsOptional()
+  @Type(() => Number) // convert query string to number
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  size?: number = 10;
+
+  @IsOptional()
+  search?: string;
+}

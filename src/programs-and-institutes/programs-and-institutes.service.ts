@@ -85,7 +85,6 @@ export class ProgramsAndInstitutesService {
       description: institute.description,
       specialties: institute.specialties,
       accreditations: institute.accreditations,
-      applicationDeadlines: institute.applicationDeadlines,
     };
   }
 
@@ -369,5 +368,15 @@ export class ProgramsAndInstitutesService {
       page,
       lastPage: Math.ceil(total / size),
     };
+  }
+
+  async getProgramsCount() {
+    const count = await this.prisma.program.count();
+    return { count };
+  }
+
+  async getInstitutesCount() {
+    const count = await this.prisma.institution.count();
+    return { count };
   }
 }
