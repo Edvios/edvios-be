@@ -84,8 +84,8 @@ export class AuthController {
   }
 
   @Delete('delete-user/:userId')
-  // @UseGuards(JwtAuthGuard, RoleGuard)
-  // @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
   async rejectAgent(@Param('userId') userId: string) {
     return this.authService.deleteUser(userId);
   }

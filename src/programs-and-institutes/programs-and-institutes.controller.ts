@@ -21,7 +21,10 @@ import {
 import { JwtAuthGuard, RoleGuard } from 'src/auth/guards';
 import { UserRole } from '@prisma/client';
 import { Roles } from '../auth/decorators';
-import { PaginationQueryDto } from './dto/pagination.dto';
+import {
+  PaginationQueryDto,
+  PaginationWithFiltersQueryDto,
+} from './dto/pagination.dto';
 import { ProgramFilterDto } from './dto/filter.dto';
 
 @Controller('pai')
@@ -44,7 +47,9 @@ export class ProgramsAndInstitutesController {
 
   @Get('institutes')
   @UseGuards(JwtAuthGuard)
-  async getAllInstitutes(@Query() paginationQuery: PaginationQueryDto) {
+  async getAllInstitutes(
+    @Query() paginationQuery: PaginationWithFiltersQueryDto,
+  ) {
     return await this.programsAndInstitutesService.getAllInstitutes(
       paginationQuery,
     );

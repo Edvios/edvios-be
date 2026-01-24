@@ -15,3 +15,17 @@ export class PaginationQueryDto {
   @Min(1)
   size?: number = 10;
 }
+
+export class PaginationWithFiltersQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  country?: string;
+
+  @IsOptional()
+  name?: string;
+
+  @IsOptional()
+  status?: string;
+
+  @IsOptional()
+  type?: string;
+}
