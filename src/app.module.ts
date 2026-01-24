@@ -10,6 +10,7 @@ import { StudentsModule } from './students/students.module';
 import { ProgramsAndInstitutesModule } from './programs-and-institutes/programs-and-institutes.module';
 import { SubjectModule } from './subject/subject.module';
 import { IntakesModule } from './intakes/intakes.module';
+import { AgentsModule } from './agents/agents.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { IntakesModule } from './intakes/intakes.module';
     ProgramsAndInstitutesModule,
     SubjectModule,
     IntakesModule,
+    AgentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

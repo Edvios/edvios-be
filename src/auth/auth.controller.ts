@@ -26,7 +26,7 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
-
+  //create user after registration
   @Post('create-user')
   @UseGuards(JwtAuthGuard)
   async createUser(@Body() createUserDto: CreateUserDto, @Req() req) {
@@ -34,13 +34,6 @@ export class AuthController {
       createUserDto,
       (req as { user: JwtStrategyReturnDto }).user.userId,
     );
-  }
-
-  @Get('pending-agents')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN)
-  async getPendingAgents() {
-    return this.authService.getPendingAgents();
   }
 
   @Post('login')
@@ -63,6 +56,23 @@ export class AuthController {
     return this.authService.getUserById(user.userId);
   }
 
+  //get the total number of users
+  @Get('users-count')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async getAllUsers() {
+    return this.authService.getUserCount();
+  }
+
+  //new user count
+  @Get('new-users-count')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async getNewUsersCount() {
+    return this.authService.getNewUsersCount();
+  }
+
+  //change the role of user
   @Patch('change-role/:userId')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
@@ -74,8 +84,8 @@ export class AuthController {
   }
 
   @Delete('delete-user/:userId')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN)
+  // @UseGuards(JwtAuthGuard, RoleGuard)
+  // @Roles(UserRole.ADMIN)
   async rejectAgent(@Param('userId') userId: string) {
     return this.authService.deleteUser(userId);
   }

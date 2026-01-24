@@ -3,7 +3,7 @@ export class CreateStudentDto {
   lastName: string;
   email: string;
   phone?: string | null;
-  address?: string | null; 
+  address?: string | null;
   nationality?: string | null;
   currentEducationLevel?: string | null;
   currentInstitution?: string | null;
