@@ -152,6 +152,8 @@ model Student {
   
   createdAt           DateTime  @default(now())
 
+  chats               Chat[]
+
   @@map("students")
 }
 
@@ -160,6 +162,8 @@ model Agent {
   user      User   @relation(fields: [id], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  chats     Chat[]
 
   @@map("agents")
 }
@@ -240,6 +244,51 @@ model Intake {
   programs  Program[]
 
   @@map("intakes")
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model Chat {
+  id          String        @id @default(uuid())
+  studentId   String        
+  agentId     String        
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  student     Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  agent       Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  messages    ChatMessage[]
+
+  @@unique([studentId, agentId])
+  @@map("chats")
+}
+
+model ChatMessage {
+  id          String        @id @default(uuid())
+  chatId      String
+  senderId    String        // User ID (can be student or agent)
+  senderRole  UserRole      // STUDENT or AGENT
+  content     String        @db.Text
+  status      MessageStatus @default(SENT)
+  
+  // File Attachment Fields
+  attachmentUrl   String?
+  attachmentType  String?       // MIME type (e.g., 'image/png', 'application/pdf')
+  attachmentName  String?       // Original file name
+  attachmentSize  Int?          // Size in bytes
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  chat        Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@index([senderId])
+  @@map("chat_messages")
 }
 
 
