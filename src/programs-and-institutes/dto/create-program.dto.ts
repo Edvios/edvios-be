@@ -12,7 +12,7 @@ export class CreateProgramDto {
   title: string;
 
   @IsString()
-  level: string;
+  level: "BACHELORS" | "MASTERS" | "PHD" | "DIPLOMA" | "CERTIFICATE";
 
   @IsString()
   intakeId: string;
