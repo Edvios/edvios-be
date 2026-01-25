@@ -11,6 +11,7 @@ import { ProgramsAndInstitutesModule } from './programs-and-institutes/programs-
 import { SubjectModule } from './subject/subject.module';
 import { IntakesModule } from './intakes/intakes.module';
 import { AgentsModule } from './agents/agents.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AgentsModule } from './agents/agents.module';
     SubjectModule,
     IntakesModule,
     AgentsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
