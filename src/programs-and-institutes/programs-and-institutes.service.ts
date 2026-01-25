@@ -6,7 +6,10 @@ import {
   CreateProgramDto,
   UpdateProgramDto,
 } from './dto';
-import { PaginationQueryDto } from './dto/pagination.dto';
+import {
+  PaginationQueryDto,
+  PaginationWithFiltersQueryDto,
+} from './dto/pagination.dto';
 import { ProgramFilterDto } from './dto/filter.dto';
 
 @Injectable()
@@ -26,11 +29,34 @@ export class ProgramsAndInstitutesService {
     });
   }
 
-  async getAllInstitutes(paginationQuery: PaginationQueryDto) {
-    const page = Number(paginationQuery.page) || 1;
-    const size = Number(paginationQuery.size) || 10;
+  async getAllInstitutes(
+    paginationQuerywithFilters: PaginationWithFiltersQueryDto,
+  ) {
+    const page = Number(paginationQuerywithFilters.page) || 1;
+    const size = Number(paginationQuerywithFilters.size) || 10;
     const skip = (page - 1) * size;
     const take = size;
+
+    const where: { [key: string]: unknown } = {};
+
+    if (paginationQuerywithFilters.country) {
+      where.country = {
+        equals: paginationQuerywithFilters.country,
+        mode: 'insensitive',
+      };
+    }
+    if (paginationQuerywithFilters.name) {
+      where.name = {
+        contains: paginationQuerywithFilters.name,
+        mode: 'insensitive',
+      };
+    }
+    if (paginationQuerywithFilters.status) {
+      where.status = { equals: paginationQuerywithFilters.status };
+    }
+    if (paginationQuerywithFilters.type) {
+      where.type = { equals: paginationQuerywithFilters.type };
+    }
 
     const [institutes, total] = await Promise.all([
       this.prisma.institution.findMany({
@@ -42,8 +68,9 @@ export class ProgramsAndInstitutesService {
         orderBy: {
           createdAt: 'desc',
         },
+        where,
       }),
-      this.prisma.institution.count(),
+      this.prisma.institution.count({ where }),
     ]);
     return {
       data: institutes,
@@ -85,7 +112,6 @@ export class ProgramsAndInstitutesService {
       description: institute.description,
       specialties: institute.specialties,
       accreditations: institute.accreditations,
-      applicationDeadlines: institute.applicationDeadlines,
     };
   }
 
@@ -367,7 +393,17 @@ export class ProgramsAndInstitutesService {
       data: programs,
       total,
       page,
-      lastPage: Math.ceil(total / size),
+      size,
     };
+  }
+
+  async getProgramsCount() {
+    const count = await this.prisma.program.count();
+    return { count };
+  }
+
+  async getInstitutesCount() {
+    const count = await this.prisma.institution.count();
+    return { count };
   }
 }

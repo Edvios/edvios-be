@@ -1,8 +1,7 @@
-// dto/pagination-query.dto.ts
 import { IsOptional, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class PaginationQueryDto {
+export class agentsGetQueryDto {
   @IsOptional()
   @Type(() => Number) // convert query string to number
   @IsInt()
@@ -14,18 +13,10 @@ export class PaginationQueryDto {
   @IsInt()
   @Min(1)
   size?: number = 10;
-}
-
-export class PaginationWithFiltersQueryDto extends PaginationQueryDto {
-  @IsOptional()
-  country?: string;
 
   @IsOptional()
-  name?: string;
+  search?: string;
 
   @IsOptional()
-  status?: string;
-
-  @IsOptional()
-  type?: string;
+  filter?: 'ALL' | 'AGENT' | 'PENDING_AGENT';
 }

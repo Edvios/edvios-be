@@ -21,7 +21,10 @@ import {
 import { JwtAuthGuard, RoleGuard } from 'src/auth/guards';
 import { UserRole } from '@prisma/client';
 import { Roles } from '../auth/decorators';
-import { PaginationQueryDto } from './dto/pagination.dto';
+import {
+  PaginationQueryDto,
+  PaginationWithFiltersQueryDto,
+} from './dto/pagination.dto';
 import { ProgramFilterDto } from './dto/filter.dto';
 
 @Controller('pai')
@@ -33,8 +36,8 @@ export class ProgramsAndInstitutesController {
   // ============= Institute Endpoints =============
 
   @Post('institutes')
-  // @UseGuards(JwtAuthGuard, RoleGuard)
-  // @Roles(UserRole.ADMIN, UserRole.AGENT)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
   @HttpCode(HttpStatus.CREATED)
   async createInstitute(@Body() createInstituteDto: CreateInstituteDto) {
     return await this.programsAndInstitutesService.createInstitute(
@@ -44,10 +47,19 @@ export class ProgramsAndInstitutesController {
 
   @Get('institutes')
   @UseGuards(JwtAuthGuard)
-  async getAllInstitutes(@Query() paginationQuery: PaginationQueryDto) {
+  async getAllInstitutes(
+    @Query() paginationQuery: PaginationWithFiltersQueryDto,
+  ) {
     return await this.programsAndInstitutesService.getAllInstitutes(
       paginationQuery,
     );
+  }
+
+  //get total count of institutes
+  @Get('institutes/count')
+  @UseGuards(JwtAuthGuard)
+  async getInstitutesCount() {
+    return await this.programsAndInstitutesService.getInstitutesCount();
   }
 
   @Get('institutes/:id')
@@ -97,6 +109,13 @@ export class ProgramsAndInstitutesController {
     return await this.programsAndInstitutesService.getAllPrograms(
       paginationQuery,
     );
+  }
+
+  //get total count of programs
+  @Get('programs/count')
+  @UseGuards(JwtAuthGuard)
+  async getProgramsCount() {
+    return await this.programsAndInstitutesService.getProgramsCount();
   }
 
   //get initial program data for dropdowns

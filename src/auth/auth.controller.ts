@@ -8,6 +8,7 @@ import {
   Param,
   UnauthorizedException,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginDto, RegisterDto } from './dto';
@@ -25,7 +26,7 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
-
+  //create user after registration
   @Post('create-user')
   @UseGuards(JwtAuthGuard)
   async createUser(@Body() createUserDto: CreateUserDto, @Req() req) {
@@ -45,7 +46,6 @@ export class AuthController {
     return this.authService.refreshToken(body.refresh_token);
   }
 
-  //get current user data
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getCurrentUser(@CurrentUser() user: AuthUser | undefined) {
@@ -56,26 +56,23 @@ export class AuthController {
     return this.authService.getUserById(user.userId);
   }
 
-  @Get('admin-only')
+  //get the total number of users
+  @Get('users-count')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
-  adminOnlyRoute(@CurrentUser() user: AuthUser) {
-    return {
-      message: 'This is admin only route',
-      user,
-    };
+  async getAllUsers() {
+    return this.authService.getUserCount();
   }
 
-  @Get('agent-or-admin')
+  //new user count
+  @Get('new-users-count')
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN, UserRole.AGENT)
-  agentOrAdminRoute(@CurrentUser() user: AuthUser) {
-    return {
-      message: 'This is for admins and agents',
-      user,
-    };
+  @Roles(UserRole.ADMIN)
+  async getNewUsersCount() {
+    return this.authService.getNewUsersCount();
   }
 
+  //change the role of user
   @Patch('change-role/:userId')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
@@ -84,5 +81,12 @@ export class AuthController {
     @Body() body: { role: UserRole },
   ) {
     return this.authService.changeUserRole(userId, body.role);
+  }
+
+  @Delete('delete-user/:userId')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async rejectAgent(@Param('userId') userId: string) {
+    return this.authService.deleteUser(userId);
   }
 }

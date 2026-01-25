@@ -6,12 +6,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { UserRole } from '@prisma/client';
+import { studentsGetQueryDto } from './dto/student-query.dto';
 
 @Injectable()
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateStudentDto,  creatorUserId: string) {
+  async create(dto: CreateStudentDto, creatorUserId: string) {
     const studentData = this.mapStudentData(dto);
 
     if (!creatorUserId) {
@@ -37,8 +39,36 @@ export class StudentsService {
     });
   }
 
-  findAll() {
-    return this.prisma.student.findMany({ include: { user: true } });
+  async findAll(studentsGetQuery: studentsGetQueryDto) {
+    const { page, size, search } = studentsGetQuery;
+
+    const skip = (Number(page) - 1) * Number(size) || 0;
+    const take = Number(size) || 10;
+
+    const where: { [key: string]: unknown } = {};
+
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    where.role = UserRole.STUDENT;
+
+    const [students, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+    return { students, total, page, size };
   }
 
   async findOne(id: string) {
@@ -73,6 +103,13 @@ export class StudentsService {
       where: { id },
       include: { user: true },
     });
+  }
+
+  async getStudentCount() {
+    const count = await this.prisma.user.count({
+      where: { role: UserRole.STUDENT },
+    });
+    return { studentCount: count };
   }
 
   private async ensureStudent(id: string) {

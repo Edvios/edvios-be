@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { RoleGuard } from 'src/auth/guards/role.guard';
 import { Roles } from 'src/auth/decorators';
 import { UserRole } from '@prisma/client';
 import { JwtStrategyReturnDto } from 'src/auth/dto/jwt-stratergy-return.dto';
+import { studentsGetQueryDto } from './dto/student-query.dto';
 
 @Controller('students')
 export class StudentsController {
@@ -25,14 +27,25 @@ export class StudentsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateStudentDto, @Req() req) {
-    return this.studentsService.create(dto, (req as { user: JwtStrategyReturnDto }).user.userId,);
+    return this.studentsService.create(
+      dto,
+      (req as { user: JwtStrategyReturnDto }).user.userId,
+    );
   }
 
   @Get()
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN, UserRole.AGENT)
-  findAll() {
-    return this.studentsService.findAll();
+  findAll(@Query() studentsGetQuery: studentsGetQueryDto) {
+    return this.studentsService.findAll(studentsGetQuery);
+  }
+
+  //get the total student count
+  @Get('students-count')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async getAllStudents() {
+    return this.studentsService.getStudentCount();
   }
 
   @Get(':id')
