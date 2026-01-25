@@ -52,6 +52,7 @@ enum StudyLevel {
   MASTERS
   PHD
   DIPLOMA
+  CERTIFICATE
 }
 
 enum InstitutionType {
@@ -193,7 +194,7 @@ model Institution {
 model Program {
   id                   String        @id @default(uuid())
   title                String
-  level                String
+  level                StudyLevel
   intake               Intake?       @relation(fields: [intakeId], references: [id], onDelete: Cascade)
   intakeId             String?
   duration             String
