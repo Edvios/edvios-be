@@ -96,4 +96,11 @@
   "institutionId": "e334bb31-4736-4b15-84da-75d157e98664"
 }
 
+## create application
+{
+  "programId": "3194bf97-eeed-4e6a-b0c0-4e8b46be663d",
+  "additionalNotes": "Yo Yo",
+  "preferredIntakeId": "40dcc1a9-317c-479c-95c8-a869a6241b49",
+  "academicYear": "2025"
+}
 

@@ -149,6 +149,8 @@ model Student {
   budgetRange         String?
   scholarshipInterest Boolean   @default(false)
   marketingConsent    Boolean   @default(false)
+
+  applications         Application[]
   
   createdAt           DateTime  @default(now())
 
@@ -218,6 +220,8 @@ model Program {
   institutionId        String
   institution          Institution  @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
+  applications         Application[]
+
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
@@ -242,6 +246,7 @@ model Intake {
   updatedAt DateTime @updatedAt
 
   programs  Program[]
+  applications Application[]
 
   @@map("intakes")
 }
@@ -289,6 +294,25 @@ model ChatMessage {
   @@index([chatId])
   @@index([senderId])
   @@map("chat_messages")
+}
+ 
+ model Application {
+  id                  String            @id @default(uuid())
+  studentId           String
+  programId           String
+  status              ApplicationStatus @default(UNDER_REVIEW)
+  additionalNotes     String?           @db.Text
+  preferredIntakeId   String?
+  academicYear        String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  student             Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  program             Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  preferredIntake     Intake?           @relation(fields: [preferredIntakeId], references: [id], onDelete: SetNull)
+  @@index([studentId])
+  @@index([programId])
+  @@map("applications")
 }
 
 
