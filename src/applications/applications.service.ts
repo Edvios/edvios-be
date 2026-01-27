@@ -12,7 +12,7 @@ export class ApplicationsService {
     const where = status ? { status } : {};
     const applications = await this.prisma.application.findMany({
       where,
-      include: { program: true, student: true },
+      include: { program: true, student: true, preferredIntake: true },
     });
     return applications;
   }
@@ -78,9 +78,25 @@ export class ApplicationsService {
   }
 
   //get applications count
-  async getApplicationsCount(status?: ApplicationStatus) {
-    const where = status ? { status } : {};
-    const count = await this.prisma.application.count({ where });
+  async getApplicationsCount() {
+    const submittedCount = await this.prisma.application.count({
+      where: { status: 'SUBMITTED' },
+    });
+    const underReviewCount = await this.prisma.application.count({
+      where: { status: 'UNDER_REVIEW' },
+    });
+    const acceptedCount = await this.prisma.application.count({
+      where: { status: 'ACCEPTED' },
+    });
+    const rejectedCount = await this.prisma.application.count({
+      where: { status: 'REJECTED' },
+    });
+    const count = {
+      SUBMITTED: submittedCount,
+      UNDER_REVIEW: underReviewCount,
+      ACCEPTED: acceptedCount,
+      REJECTED: rejectedCount,
+    };
     return { count };
   }
 }

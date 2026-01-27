@@ -300,7 +300,7 @@ model ChatMessage {
   id                  String            @id @default(uuid())
   studentId           String
   programId           String
-  status              ApplicationStatus @default(UNDER_REVIEW)
+  status              ApplicationStatus @default(SUBMITTED)
   additionalNotes     String?           @db.Text
   preferredIntakeId   String?
   academicYear        String?

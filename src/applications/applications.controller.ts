@@ -45,8 +45,8 @@ export class ApplicationsController {
   @Get('count')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN, UserRole.AGENT)
-  getApplicationsCount(@Query('status') status?: ApplicationStatus) {
-    return this.applicationsService.getApplicationsCount(status);
+  getApplicationsCount() {
+    return this.applicationsService.getApplicationsCount();
   }
 
   //get all application belonging to a student
