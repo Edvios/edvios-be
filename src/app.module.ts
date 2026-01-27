@@ -12,6 +12,7 @@ import { SubjectModule } from './subject/subject.module';
 import { IntakesModule } from './intakes/intakes.module';
 import { AgentsModule } from './agents/agents.module';
 import { ChatModule } from './chat/chat.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ChatModule } from './chat/chat.module';
     IntakesModule,
     AgentsModule,
     ChatModule,
+    ApplicationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
