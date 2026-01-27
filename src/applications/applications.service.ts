@@ -79,11 +79,18 @@ export class ApplicationsService {
 
   //get applications count
   async getApplicationsCount() {
-    
-    const submittedCount = await this.prisma.application.count({ where: { status: 'SUBMITTED' } });
-    const underReviewCount = await this.prisma.application.count({ where: { status: 'UNDER_REVIEW' } });
-    const acceptedCount = await this.prisma.application.count({ where: { status: 'ACCEPTED' } });
-    const rejectedCount = await this.prisma.application.count({ where: { status: 'REJECTED' } });
+    const submittedCount = await this.prisma.application.count({
+      where: { status: 'SUBMITTED' },
+    });
+    const underReviewCount = await this.prisma.application.count({
+      where: { status: 'UNDER_REVIEW' },
+    });
+    const acceptedCount = await this.prisma.application.count({
+      where: { status: 'ACCEPTED' },
+    });
+    const rejectedCount = await this.prisma.application.count({
+      where: { status: 'REJECTED' },
+    });
     const count = {
       SUBMITTED: submittedCount,
       UNDER_REVIEW: underReviewCount,
