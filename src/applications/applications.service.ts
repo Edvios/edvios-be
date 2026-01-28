@@ -2,16 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { applicationCreateDto } from './dto/application-create.dto';
 import { ApplicationStatus } from '@prisma/client';
+import { PaginatioApplicationnQueryDto } from './dto/pagination.dto';
 
 @Injectable()
 export class ApplicationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   //get all applications
-  async getApplications(status?: ApplicationStatus) {
-    const where = status ? { status } : {};
+  async getApplications(query: PaginatioApplicationnQueryDto) {
+    let where = {};
+    if (query.status) {
+      where = { status: query.status };
+    }
+    const page = Number(query.page) || 1;
+    const size = Number(query.size) || 10;
+    const skip = (page - 1) * size;
+    const take = size;
+
     const applications = await this.prisma.application.findMany({
       where,
+      skip,
+      take,
       include: { program: true, student: true, preferredIntake: true },
     });
     return applications;
