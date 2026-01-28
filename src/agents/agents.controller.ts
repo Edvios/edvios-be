@@ -41,4 +41,11 @@ export class AgentsController {
   async getAllPendingAgents() {
     return this.agentsService.getPendingAgentCount();
   }
+
+  @Get('dashboard-stats')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  async getDashboardStats() {
+    return this.agentsService.getDashboardStats();
+  }
 }

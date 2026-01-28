@@ -16,6 +16,7 @@ import { UserRole } from '@prisma/client';
 import { applicationCreateDto } from './dto/application-create.dto';
 import { JwtStrategyReturnDto } from 'src/auth/dto/jwt-stratergy-return.dto';
 import { ApplicationStatus } from '@prisma/client';
+import { PaginatioApplicationnQueryDto } from './dto/pagination.dto';
 
 @Controller('applications')
 export class ApplicationsController {
@@ -25,8 +26,8 @@ export class ApplicationsController {
   @Get()
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN, UserRole.AGENT)
-  getApplications(@Query('status') status?: ApplicationStatus) {
-    return this.applicationsService.getApplications(status);
+  getApplications(@Query() query: PaginatioApplicationnQueryDto) {
+    return this.applicationsService.getApplications(query);
   }
 
   //create a new application
@@ -45,8 +46,8 @@ export class ApplicationsController {
   @Get('count')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN, UserRole.AGENT)
-  getApplicationsCount(@Query('status') status?: ApplicationStatus) {
-    return this.applicationsService.getApplicationsCount(status);
+  getApplicationsCount() {
+    return this.applicationsService.getApplicationsCount();
   }
 
   //get all application belonging to a student

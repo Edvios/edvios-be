@@ -2,17 +2,28 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { applicationCreateDto } from './dto/application-create.dto';
 import { ApplicationStatus } from '@prisma/client';
+import { PaginatioApplicationnQueryDto } from './dto/pagination.dto';
 
 @Injectable()
 export class ApplicationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   //get all applications
-  async getApplications(status?: ApplicationStatus) {
-    const where = status ? { status } : {};
+  async getApplications(query: PaginatioApplicationnQueryDto) {
+    let where = {};
+    if (query.status) {
+      where = { status: query.status };
+    }
+    const page = Number(query.page) || 1;
+    const size = Number(query.size) || 10;
+    const skip = (page - 1) * size;
+    const take = size;
+
     const applications = await this.prisma.application.findMany({
       where,
-      include: { program: true, student: true },
+      skip,
+      take,
+      include: { program: true, student: true, preferredIntake: true },
     });
     return applications;
   }
@@ -78,9 +89,25 @@ export class ApplicationsService {
   }
 
   //get applications count
-  async getApplicationsCount(status?: ApplicationStatus) {
-    const where = status ? { status } : {};
-    const count = await this.prisma.application.count({ where });
+  async getApplicationsCount() {
+    const submittedCount = await this.prisma.application.count({
+      where: { status: 'SUBMITTED' },
+    });
+    const underReviewCount = await this.prisma.application.count({
+      where: { status: 'UNDER_REVIEW' },
+    });
+    const acceptedCount = await this.prisma.application.count({
+      where: { status: 'ACCEPTED' },
+    });
+    const rejectedCount = await this.prisma.application.count({
+      where: { status: 'REJECTED' },
+    });
+    const count = {
+      SUBMITTED: submittedCount,
+      UNDER_REVIEW: underReviewCount,
+      ACCEPTED: acceptedCount,
+      REJECTED: rejectedCount,
+    };
     return { count };
   }
 }
