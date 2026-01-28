@@ -2,10 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
+import { ApplicationsService } from 'src/applications/applications.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class AgentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private applicationsService: ApplicationsService,
+    private authService: AuthService,
+  ) {}
 
   async getPendingAgents() {
     const pendingAgents = await this.prisma.user.findMany({
@@ -61,5 +67,29 @@ export class AgentsService {
       this.prisma.user.count({ where }),
     ]);
     return { agents, total, page, size };
+  }
+
+  async getDashboardStats() {
+    const [
+      totalStudents,
+      newUsers,
+      totalPrograms,
+      totalInstitutions,
+      totalApplications,
+    ] = await Promise.all([
+      this.prisma.user.count({ where: { role: UserRole.STUDENT } }),
+      this.authService.getNewUsersCount(),
+      this.prisma.program.count(),
+      this.prisma.institution.count(),
+      this.applicationsService.getApplicationsCount(),
+    ]);
+
+    return {
+      totalStudents,
+      newUsers: newUsers.newUsersCount,
+      totalPrograms,
+      totalInstitutions,
+      totalApplications,
+    };
   }
 }
