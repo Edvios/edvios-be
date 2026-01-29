@@ -19,13 +19,16 @@ export class ApplicationsService {
     const skip = (page - 1) * size;
     const take = size;
 
-    const applications = await this.prisma.application.findMany({
-      where,
-      skip,
-      take,
-      include: { program: true, student: true, preferredIntake: true },
-    });
-    return applications;
+    const [applications,total] = await Promise.all([
+      this.prisma.application.findMany({
+        where,
+        skip,
+        take,
+        include: { program: true, student: true, preferredIntake: true },
+      }),
+      this.prisma.application.count({ where }),
+    ]);
+    return {applications, total,page};
   }
 
   //create a new application
