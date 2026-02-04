@@ -31,6 +31,58 @@ export class ApplicationsService {
     return {applications, total,page};
   }
 
+  async getApplicationsByAgent(query: PaginatioApplicationnQueryDto, userId: string | undefined) {
+
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    let where = {};
+    if (query.status) {
+      where = { status: query.status };
+    }
+    const page = Number(query.page) || 1;
+    const size = Number(query.size) || 10;
+    const skip = (page - 1) * size;
+    const take = size;
+
+    const agent = await this.prisma.agent.findUnique({
+      where: { id: userId },
+    });
+
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+
+    const students = await this.prisma.agentAssignment.findMany({
+      where: { agentId: agent.id },
+      select: { studentId: true },
+    });
+
+    const studentIds = students.map((s) => s.studentId);
+
+    const [applications,total] = await Promise.all([
+      this.prisma.application.findMany({
+        where: {
+          ...where,
+          studentId: { in: studentIds },
+        },
+        skip,
+        take,
+        include: { program: true, student: true, preferredIntake: true },
+      }),
+      this.prisma.application.count({
+        where: {
+          ...where,
+          studentId: { in: studentIds },  
+        },
+      }),
+    ]);
+    return {applications, total,page};
+      
+
+  }
+
   //create a new application
   async createApplication(
     applicationCreateDto: applicationCreateDto,

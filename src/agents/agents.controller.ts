@@ -1,9 +1,9 @@
-import { Controller, Get, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, Patch, Param } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RoleGuard } from 'src/auth/guards/role.guard';
-import { UserRole } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 
 @Controller('agents')
@@ -48,4 +48,19 @@ export class AgentsController {
   async getDashboardStats() {
     return this.agentsService.getDashboardStats();
   }
+
+  @Get('agent-assignments')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async getAgentAssignments(@Query('role') role: UserRole) {
+    return this.agentsService.getAgentAssignments(role);
+  }
+
+  @Patch('change-assignment/:assignmentId/agent/:agentId')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async changeAgentAssignment(@Param('assignmentId') assignmentId: string, @Param('agentId') agentId: string) {
+    return this.agentsService.changeAgentAssignment(assignmentId, agentId);
+  }
+
 }

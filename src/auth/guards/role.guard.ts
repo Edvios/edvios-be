@@ -33,7 +33,11 @@ export class RoleGuard implements CanActivate {
       throw new ForbiddenException('User role not set');
     }
 
-    const userRole = user.role;
+    let userRole = user.role;
+    // Treat SELECTED_AGENT as AGENT for role checking
+    if(userRole === UserRole.SELECTED_AGENT){
+      userRole = UserRole.AGENT;
+    }
 
     if (!requiredRoles.includes(userRole)) {
       throw new ForbiddenException(

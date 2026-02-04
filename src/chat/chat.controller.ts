@@ -32,22 +32,12 @@ interface ChatUser {
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  /**
-   * Create a new chat between student and agent
-   */
-  @Post()
-  @UseGuards(RoleGuard)
-  @Roles(UserRole.ADMIN, UserRole.AGENT)
-  async createChat(@Body() createChatDto: CreateChatDto) {
-    return this.chatService.createChat(createChatDto);
-  }
 
   /**
    * Get all chats for the current user
    */
   @Get()
   async getUserChats(@CurrentUser() user: ChatUser) {
-    console.log('GET /chat - user:', user);
     return this.chatService.getUserChats(user.userId, user.role);
   }
 

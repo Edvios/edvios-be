@@ -92,4 +92,46 @@ export class AgentsService {
       totalApplications,
     };
   }
+
+  async changeAgentAssignment(assignmentId: string, agentId: string) {
+    // Ensure agent exists
+    const agent = await this.prisma.user.findUnique({
+      where: { id: agentId},
+    });
+    if (!agent) {
+      throw new Error(`Agent ${agentId} not found or not valid`);
+    }
+    
+    // Change agent assignment
+    return this.prisma.agentAssignment.update({
+      where: { id: assignmentId },
+      data: { agentId },
+    });
+  }
+
+  async getAgentAssignments(role: UserRole) {
+    // Fetch assignments for agents with the specified role
+    const assignments = await this.prisma.agentAssignment.findMany({
+      where: {
+        agent: {
+          user: {
+            role,
+          },
+        },
+      },
+      include: {
+        student: {
+          include: {
+            user: true,
+          },
+        },
+        agent: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+    return assignments;
+  }
 }

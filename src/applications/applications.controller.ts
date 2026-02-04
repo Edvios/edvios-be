@@ -11,24 +11,18 @@ import {
 } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
 import { JwtAuthGuard, RoleGuard } from 'src/auth/guards';
-import { Roles } from 'src/auth/decorators';
+import { CurrentUser, Roles } from 'src/auth/decorators';
 import { UserRole } from '@prisma/client';
 import { applicationCreateDto } from './dto/application-create.dto';
 import { JwtStrategyReturnDto } from 'src/auth/dto/jwt-stratergy-return.dto';
 import { ApplicationStatus } from '@prisma/client';
 import { PaginatioApplicationnQueryDto } from './dto/pagination.dto';
+import type { AuthUser } from 'src/auth/types';
+
 
 @Controller('applications')
 export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) {}
-
-  //get all applications, optional status filter
-  @Get()
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN, UserRole.AGENT)
-  getApplications(@Query() query: PaginatioApplicationnQueryDto) {
-    return this.applicationsService.getApplications(query);
-  }
 
   //create a new application
   @Post()
@@ -41,6 +35,22 @@ export class ApplicationsController {
       applicationCreateDto,
       (req as { user: JwtStrategyReturnDto }).user.userId,
     );
+  }
+
+  //get all applications by admin, optional status filter
+  @Get('admin')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  getApplications(@Query() query: PaginatioApplicationnQueryDto) {
+    return this.applicationsService.getApplications(query);
+  }
+
+  //get all application by agent, optional status filter
+  @Get('agent')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.AGENT)
+  getApplicationsByAgent(@Query() query: PaginatioApplicationnQueryDto, @CurrentUser() user: AuthUser | undefined) {
+    return this.applicationsService.getApplicationsByAgent(query,user?.userId);
   }
 
   @Get('count')
