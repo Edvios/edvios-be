@@ -30,12 +30,49 @@ export class StudentsService {
       throw new NotFoundException(`User ${creatorUserId} not found`);
     }
 
-    return this.prisma.student.create({
+    const student = await this.prisma.student.create({
       data: {
         ...studentData,
         user: { connect: { id: creatorUserId } },
       },
       include: { user: true },
+    });
+
+    const agent = await this.prisma.user.findMany({
+      where: { role: UserRole.SELECTED_AGENT },
+      select: { id: true },
+    });
+
+    if (agent.length === 0) {
+      throw new BadRequestException('No SELECTED_AGENT found');
+    }
+
+    await this.assignAgentToStudent(student.id, agent[0].id);
+
+    return student;
+  }
+
+  async assignAgentToStudent(studentId: string, agentId: string) {
+    // Ensure both student and agent exist
+    const student = await this.prisma.student.findUnique({
+      where: { id: studentId },
+    });
+    if (!student) {
+      throw new NotFoundException(`Student ${studentId} not found`);
+    }
+    const agent = await this.prisma.user.findUnique({
+      where: { id: agentId },
+    });
+
+    if (!agent || agent.role !== UserRole.SELECTED_AGENT) {
+      throw new NotFoundException(`Agent ${agentId} not found or not valid`);
+    }
+    // Assign agent to student
+    return this.prisma.agentAssignment.create({
+      data: {
+        studentId,
+        agentId,
+      },
     });
   }
 
