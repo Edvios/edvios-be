@@ -52,8 +52,8 @@ export class AgentsController {
   @Get('agent-assignments')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
-  async getAgentAssignments(@Query('role') role: UserRole) {
-    return this.agentsService.getAgentAssignments(role);
+  async getAgentAssignments(@Query() assignedAgentQuery: agentsGetQueryDto) {
+    return this.agentsService.getAgentAssignments(assignedAgentQuery);
   }
 
   @Patch('change-assignment/:assignmentId/agent/:agentId')

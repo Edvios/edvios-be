@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 import { ApplicationsService } from 'src/applications/applications.service';
 import { AuthService } from 'src/auth/auth.service';
@@ -109,26 +109,98 @@ export class AgentsService {
     });
   }
 
-  async getAgentAssignments(role: UserRole) {
-    // Fetch assignments for agents with the specified role
-    const assignments = await this.prisma.agentAssignment.findMany({
-      where: {
-        agent: {
-          user: {
-            role,
+  async getAgentAssignments(assignedAgentQuery: agentsGetQueryDto) {
+    const page = assignedAgentQuery.page || 1;
+    const size = assignedAgentQuery.size || 10;
+    const skip = (page - 1) * size;
+    const take = size;
+    const where: Prisma.AgentAssignmentWhereInput = {};
+
+    if (assignedAgentQuery.filter) {
+      where.agent = {
+        user: {
+          role:
+            assignedAgentQuery.filter === 'ALL'
+              ? {
+                  in: [
+                    UserRole.AGENT,
+                    UserRole.PENDING_AGENT,
+                    UserRole.SELECTED_AGENT,
+                  ],
+                }
+              : assignedAgentQuery.filter,
+        },
+      };
+    }
+
+    if (assignedAgentQuery.search) {
+      where.OR = [
+        {
+          student: {
+            firstName: {
+              contains: assignedAgentQuery.search,
+              mode: 'insensitive',
+            },
           },
         },
-      },
+        {
+          student: {
+            lastName: {
+              contains: assignedAgentQuery.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          agent: {
+            user: {
+              firstName: {
+                contains: assignedAgentQuery.search,
+                mode: 'insensitive',
+              },
+            },
+          },
+        },
+        {
+          agent: {
+            user: {
+              lastName: {
+                contains: assignedAgentQuery.search,
+                mode: 'insensitive',
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    const assignments = await this.prisma.agentAssignment.findMany({
+      where,
+      skip,
+      take,
       include: {
         student: {
-          include: {
-            user: true,
-          },
+          select: { 
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true
+           },
         },
         agent: {
-          include: {
-            user: true,
-          },
+          select: { 
+            id: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,                
+                email: true,
+                phone: true
+              }
+            }
+           },
+
         },
       },
     });
