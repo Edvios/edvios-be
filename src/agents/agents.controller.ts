@@ -1,10 +1,13 @@
-import { Controller, Get, UseGuards, Query, Patch, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, Patch, Param, Post, Body } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RoleGuard } from 'src/auth/guards/role.guard';
 import { User, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
+import { CurrentUser } from 'src/auth/decorators';
+import { AuthUser } from 'src/auth/types';
+import { AgentRegisterDto } from './dto/create-agent.dto';
 
 @Controller('agents')
 export class AgentsController {
@@ -16,6 +19,12 @@ export class AgentsController {
   @Roles(UserRole.ADMIN)
   async getAllAgents(@Query() agentsGetQuery: agentsGetQueryDto) {
     return this.agentsService.getAllAgents(agentsGetQuery);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async createAgent(@CurrentUser() user: AuthUser | undefined, @Body() agent: AgentRegisterDto) {
+    return this.agentsService.createAgent(user, agent);
   }
 
   //get the pending agents after registration of agents

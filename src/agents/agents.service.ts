@@ -4,6 +4,8 @@ import { Prisma, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 import { ApplicationsService } from 'src/applications/applications.service';
 import { AuthService } from 'src/auth/auth.service';
+import { AuthUser } from 'src/auth/types';
+import { AgentRegisterDto } from './dto/create-agent.dto';
 
 @Injectable()
 export class AgentsService {
@@ -110,8 +112,8 @@ export class AgentsService {
   }
 
   async getAgentAssignments(assignedAgentQuery: agentsGetQueryDto) {
-    const page = assignedAgentQuery.page || 1;
-    const size = assignedAgentQuery.size || 10;
+    const page = Number(assignedAgentQuery.page) || 1;
+    const size = Number(assignedAgentQuery.size) || 10;
     const skip = (page - 1) * size;
     const take = size;
     const where: Prisma.AgentAssignmentWhereInput = {};
@@ -205,5 +207,24 @@ export class AgentsService {
       },
     });
     return assignments;
+  }
+
+  async createAgent(user: AuthUser | undefined, agent: AgentRegisterDto) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    return this.prisma.agent.create({
+      data: {
+        country: agent.country,
+        city: agent.city,
+        state: agent.state,
+        companyName: agent.companyName,
+        comment: agent.comment,
+        user: {
+          connect: { id: user.userId },
+        },
+      },
+    });
   }
 }
