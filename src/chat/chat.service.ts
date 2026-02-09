@@ -59,7 +59,7 @@ export class ChatService {
     }
 
     // Create or return existing chat
-    const chat = await this.prisma.chat.upsert({
+    const chat = await this.prisma.agentAssignment.upsert({
       where: {
         studentId_agentId: { studentId, agentId },
       },
@@ -85,7 +85,7 @@ export class ChatService {
    * Get chat by ID
    */
   async getChatById(chatId: string, userId: string) {
-    const chat = await this.prisma.chat.findUnique({
+    const chat = await this.prisma.agentAssignment.findUnique({
       where: { id: chatId },
       include: {
         student: {
@@ -118,11 +118,8 @@ export class ChatService {
       OR: [{ studentId: userId }, { agentId: userId }],
     };
 
-    console.log(
-      `Getting chats for user ${userId} with role ${userRole || 'undefined'}`,
-    );
 
-    const chats = await this.prisma.chat.findMany({
+    const chats = await this.prisma.agentAssignment.findMany({
       where: whereClause,
       include: {
         student: {
@@ -174,7 +171,7 @@ export class ChatService {
     } = sendMessageDto;
 
     // Verify chat exists and user has access
-    const chat = await this.prisma.chat.findUnique({
+    const chat = await this.prisma.agentAssignment.findUnique({
       where: { id: chatId },
     });
 
@@ -208,7 +205,7 @@ export class ChatService {
     });
 
     // Update chat's updatedAt timestamp
-    await this.prisma.chat.update({
+    await this.prisma.agentAssignment.update({
       where: { id: chatId },
       data: { updatedAt: new Date() },
     });
@@ -227,22 +224,13 @@ export class ChatService {
     const { page = 1, size = 50, before } = query;
 
     // Verify chat exists and user has access
-    const chat = await this.prisma.chat.findUnique({
+    const chat = await this.prisma.agentAssignment.findUnique({
       where: { id: chatId },
     });
 
     if (!chat) {
       throw new NotFoundException('Chat not found');
     }
-
-    console.log('getMessages auth check:', {
-      chatId,
-      userId,
-      chatStudentId: chat.studentId,
-      chatAgentId: chat.agentId,
-      isStudent: chat.studentId === userId,
-      isAgent: chat.agentId === userId,
-    });
 
     if (chat.studentId !== userId && chat.agentId !== userId) {
       throw new ForbiddenException('You do not have access to this chat');
@@ -254,6 +242,7 @@ export class ChatService {
     const whereClause: { chatId: string; createdAt?: { lt: Date } } = {
       chatId,
     };
+    
     if (before) {
       const beforeMessage = await this.prisma.chatMessage.findUnique({
         where: { id: before },
@@ -323,7 +312,7 @@ export class ChatService {
    */
   async getAssignedAgent(studentId: string) {
     // Check if student already has a chat with an agent
-    const existingChat = await this.prisma.chat.findFirst({
+    const existingChat = await this.prisma.agentAssignment.findFirst({
       where: { studentId },
       include: {
         agent: {
@@ -337,24 +326,24 @@ export class ChatService {
     }
 
     // Find an available agent (simple round-robin - get agent with least chats)
-    const agentWithLeastChats = await this.prisma.agent.findFirst({
-      include: {
-        user: true,
-        _count: { select: { chats: true } },
-      },
-      orderBy: {
-        chats: { _count: 'asc' },
-      },
-    });
+    // const agentWithLeastChats = await this.prisma.agent.findFirst({
+    //   include: {
+    //     user: true,
+    //     _count: { select: { chats: true } },
+    //   },
+    //   orderBy: {
+    //     chats: { _count: 'asc' },
+    //   },
+    // });
 
-    return agentWithLeastChats;
+    // return agentWithLeastChats;
   }
 
   /**
    * Get unread message count for a user
    */
   async getUnreadCount(userId: string) {
-    const chats = await this.prisma.chat.findMany({
+    const chats = await this.prisma.agentAssignment.findMany({
       where: {
         OR: [{ studentId: userId }, { agentId: userId }],
       },

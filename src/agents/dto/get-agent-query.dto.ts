@@ -18,5 +18,5 @@ export class agentsGetQueryDto {
   search?: string;
 
   @IsOptional()
-  filter?: 'ALL' | 'AGENT' | 'PENDING_AGENT';
+  filter?: 'ALL' | 'AGENT' | 'PENDING_AGENT' | 'SELECTED_AGENT';
 }

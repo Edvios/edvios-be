@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 import { ApplicationsService } from 'src/applications/applications.service';
 import { AuthService } from 'src/auth/auth.service';
+import { AuthUser } from 'src/auth/types';
+import { AgentRegisterDto } from './dto/create-agent.dto';
 
 @Injectable()
 export class AgentsService {
@@ -91,5 +93,138 @@ export class AgentsService {
       totalInstitutions,
       totalApplications,
     };
+  }
+
+  async changeAgentAssignment(assignmentId: string, agentId: string) {
+    // Ensure agent exists
+    const agent = await this.prisma.user.findUnique({
+      where: { id: agentId},
+    });
+    if (!agent) {
+      throw new Error(`Agent ${agentId} not found or not valid`);
+    }
+    
+    // Change agent assignment
+    return this.prisma.agentAssignment.update({
+      where: { id: assignmentId },
+      data: { agentId },
+    });
+  }
+
+  async getAgentAssignments(assignedAgentQuery: agentsGetQueryDto) {
+    const page = Number(assignedAgentQuery.page) || 1;
+    const size = Number(assignedAgentQuery.size) || 10;
+    const skip = (page - 1) * size;
+    const take = size;
+    const where: Prisma.AgentAssignmentWhereInput = {};
+
+    if (assignedAgentQuery.filter) {
+      where.agent = {
+        user: {
+          role:
+            assignedAgentQuery.filter === 'ALL'
+              ? {
+                  in: [
+                    UserRole.AGENT,
+                    UserRole.PENDING_AGENT,
+                    UserRole.SELECTED_AGENT,
+                  ],
+                }
+              : assignedAgentQuery.filter,
+        },
+      };
+    }
+
+    if (assignedAgentQuery.search) {
+      where.OR = [
+        {
+          student: {
+            firstName: {
+              contains: assignedAgentQuery.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          student: {
+            lastName: {
+              contains: assignedAgentQuery.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          agent: {
+            user: {
+              firstName: {
+                contains: assignedAgentQuery.search,
+                mode: 'insensitive',
+              },
+            },
+          },
+        },
+        {
+          agent: {
+            user: {
+              lastName: {
+                contains: assignedAgentQuery.search,
+                mode: 'insensitive',
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    const assignments = await this.prisma.agentAssignment.findMany({
+      where,
+      skip,
+      take,
+      include: {
+        student: {
+          select: { 
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true
+           },
+        },
+        agent: {
+          select: { 
+            id: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,                
+                email: true,
+                phone: true
+              }
+            }
+           },
+
+        },
+      },
+    });
+    return assignments;
+  }
+
+  async createAgent(user: AuthUser | undefined, agent: AgentRegisterDto) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    return this.prisma.agent.create({
+      data: {
+        country: agent.country,
+        city: agent.city,
+        state: agent.state,
+        companyName: agent.companyName,
+        comment: agent.comment,
+        user: {
+          connect: { id: user.userId },
+        },
+      },
+    });
   }
 }
