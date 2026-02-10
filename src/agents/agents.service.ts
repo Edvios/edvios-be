@@ -216,11 +216,43 @@ export class AgentsService {
 
     return this.prisma.agent.create({
       data: {
-        country: agent.country,
-        city: agent.city,
-        state: agent.state,
-        companyName: agent.companyName,
-        comment: agent.comment,
+        legalName: agent.legalName,
+        tradingName: agent.tradingName ?? undefined,
+        agentName: agent.agentName,
+        calendlyLink: agent.calendlyLink ?? undefined,
+        countryOfRegistration: agent.countryOfRegistration,
+        yearEstablished: agent.yearEstablished ?? undefined,
+        websiteUrl: agent.websiteUrl ?? undefined,
+        officeAddress: agent.officeAddress,
+        contactPersonName: agent.contactPersonName,
+        designation: agent.designation ?? undefined,
+        officialEmail: agent.officialEmail,
+        phoneNumber: agent.phoneNumber,
+        businessRegistrationNumber: agent.businessRegistrationNumber,
+        businessRegistrationCertificate:
+          agent.businessRegistrationCertificate ?? undefined,
+        officeAddressProof: agent.officeAddressProof ?? undefined,
+        registeredWithEducationCouncils:
+          agent.registeredWithEducationCouncils ?? false,
+        workingWithUkInstitutions:
+          agent.workingWithUkInstitutions ?? false,
+        workingWithCanadaInstitutions:
+          agent.workingWithCanadaInstitutions ?? false,
+        workingWithAustraliaInstitutions:
+          agent.workingWithAustraliaInstitutions ?? false,
+        primaryStudentMarkets: agent.primaryStudentMarkets ?? [],
+        averageStudentsPerYearLast2Years:
+          agent.averageStudentsPerYearLast2Years ?? undefined,
+        mainDestinations: agent.mainDestinations ?? [],
+        typicalStudentProfileStrength:
+          agent.typicalStudentProfileStrength ?? undefined,
+        inHouseVisaSupport: agent.inHouseVisaSupport ?? false,
+        numberOfCounsellors: agent.numberOfCounsellors ?? 1,
+        servicesProvided: agent.servicesProvided ?? [],
+        reasonToUseEdvios: agent.reasonToUseEdvios ?? undefined,
+        interestedFeatures: agent.interestedFeatures ?? [],
+        agentTier: agent.agentTier ?? 'BASIC',
+        notes: agent.notes ?? undefined,
         user: {
           connect: { id: user.userId },
         },

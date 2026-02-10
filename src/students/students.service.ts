@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { studentsGetQueryDto } from './dto/student-query.dto';
 
 @Injectable()
@@ -34,7 +34,7 @@ export class StudentsService {
       data: {
         ...studentData,
         user: { connect: { id: creatorUserId } },
-      },
+      } as Prisma.StudentCreateInput,
       include: { user: true },
     });
 
@@ -154,42 +154,61 @@ export class StudentsService {
     if (!s) throw new NotFoundException(`Student ${id} not found`);
   }
 
-  private mapStudentData(dto: Partial<CreateStudentDto | UpdateStudentDto>) {
+  private mapStudentData(dto: CreateStudentDto | UpdateStudentDto) {
     return {
+      // Personal info
       firstName: dto.firstName,
       lastName: dto.lastName,
+      dob: dto.dob ? new Date(dto.dob) : undefined,
+      gender: dto.gender ?? undefined,
+      nationality: dto.nationality,
+      passportNumber: dto.passportNumber,
+      passportExpiryDate: dto.passportExpiryDate
+        ? new Date(dto.passportExpiryDate)
+        : undefined,
+      countryOfResidence: dto.countryOfResidence,
+
+      // Contact
       email: dto.email,
-      phone: dto.phone ?? null,
-      address: dto.address ?? null,
-      nationality: dto.nationality ?? null,
-      currentEducationLevel: dto.currentEducationLevel ?? null,
-      currentInstitution: dto.currentInstitution ?? null,
-      fieldOfStudy: dto.fieldOfStudy ?? null,
-      gpa: dto.gpa ?? null,
-      graduationDate: dto.graduationDate ? new Date(dto.graduationDate) : null,
-      preferredDestination: dto.preferredDestination ?? null,
-      preferredProgram: dto.preferredProgram ?? null,
-      preferredStudyLevel: dto.preferredStudyLevel ?? null,
-      preferredIntake: dto.preferredIntake ?? null,
-      englishTest: dto.englishTest ?? null,
-      englishScore: dto.englishScore ?? null,
-      hasValidPassport: dto.hasValidPassport ?? undefined,
-      hasAcademicTranscripts: dto.hasAcademicTranscripts ?? undefined,
-      hasRecommendationLetters: dto.hasRecommendationLetters ?? undefined,
-      hasPersonalStatement: dto.hasPersonalStatement ?? undefined,
-      workExperience: dto.workExperience ?? null,
-      extraCurricular: dto.extraCurricular ?? null,
-      careerGoals: dto.careerGoals ?? null,
-      referralSource: dto.referralSource ?? null,
-      preferredContactMethod: dto.preferredContactMethod ?? null,
-      bestTimeToContact: dto.bestTimeToContact ?? null,
-      additionalQuestions: dto.additionalQuestions ?? null,
-      dob: dto.dob ? new Date(dto.dob) : null,
-      currentCountry: dto.currentCountry ?? null,
-      currentCity: dto.currentCity ?? null,
-      budgetRange: dto.budgetRange ?? null,
-      scholarshipInterest: dto.scholarshipInterest ?? false,
-      marketingConsent: dto.marketingConsent ?? false,
+      phone: dto.phone,
+      emergencyContact: dto.emergencyContact,
+
+      // Academic background
+      highestQualification: dto.highestQualification,
+      yearOfCompletion: dto.yearOfCompletion ?? undefined,
+      institutionName: dto.institutionName,
+      mediumOfInstruction: dto.mediumOfInstruction ?? undefined,
+      gradesSummary: dto.gradesSummary ?? undefined,
+      academicCertificates: dto.academicCertificates ?? undefined,
+
+      // English test
+      englishTestTaken: dto.englishTestTaken ?? undefined,
+      overallScore: dto.overallScore ?? undefined,
+      testExpiryDate: dto.testExpiryDate
+        ? new Date(dto.testExpiryDate)
+        : undefined,
+
+      // Study preferences
+      intendedIntakeMonth: dto.intendedIntakeMonth ?? undefined,
+      intendedIntakeYear: dto.intendedIntakeYear ?? undefined,
+      preferredCountries: dto.preferredCountries ?? undefined,
+      preferredStudyLevel: dto.preferredStudyLevel ?? undefined,
+      preferredFieldOfStudy: dto.preferredFieldOfStudy,
+
+      // Financial
+      estimatedBudget: dto.estimatedBudget ?? undefined,
+      fundingSource: dto.fundingSource ?? undefined,
+
+      // Visa / immigration
+      previousVisaRefusal: dto.previousVisaRefusal ?? undefined,
+      visaRefusalDetails: dto.visaRefusalDetails ?? undefined,
+      travelHistory: dto.travelHistory ?? undefined,
+      ongoingImmigrationApps: dto.ongoingImmigrationApps ?? undefined,
+
+      // Internal / assessment
+      academicFit: dto.academicFit ?? undefined,
+      visaRiskBand: dto.visaRiskBand ?? undefined,
+      notes: dto.notes ?? undefined,
     };
   }
 }

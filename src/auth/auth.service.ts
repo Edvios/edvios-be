@@ -159,6 +159,16 @@ export class AuthService {
   }
 
   async changeUserRole(userId: string, newRole: UserRole) {
+    if (newRole === UserRole.SELECTED_AGENT) {
+      const existingSelectedAgent = await this.prisma.user.findFirst({
+        where: { role: UserRole.SELECTED_AGENT },
+      });
+      if (existingSelectedAgent) {
+        throw new BadRequestException(
+          'There is already a user with the SELECTED_AGENT role',
+        );
+      }
+    }
     try {
       // Update role in Prisma database
       const user = await this.prisma.user.update({

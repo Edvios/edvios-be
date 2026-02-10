@@ -1,21 +1,108 @@
-import { IsNotEmpty, IsOptional} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsBoolean, IsInt, IsArray } from 'class-validator';
+import { FeatureType, ServiceType } from '@prisma/client';
 
-export class CreateAgentDto {}
+export class CreateAgentDto {
+  @IsNotEmpty()
+  legalName: string;
 
-export class AgentRegisterDto {
-    @IsNotEmpty()
-    country: string;
+  @IsOptional()
+  tradingName?: string | null;
 
-    @IsNotEmpty()
-    state: string;
+  @IsNotEmpty()
+  agentName: string;
 
-    @IsNotEmpty()
-    city: string;
+  @IsOptional()
+  calendlyLink?: string | null;
 
-    @IsOptional()
-    companyName?: string;
+  @IsNotEmpty()
+  countryOfRegistration: string;
 
-    @IsOptional()
-    comment?: string;
+  @IsOptional()
+  @IsInt()
+  yearEstablished?: number | null;
 
+  @IsOptional()
+  websiteUrl?: string | null;
+
+  @IsNotEmpty()
+  officeAddress: string;
+
+  @IsNotEmpty()
+  contactPersonName: string;
+
+  @IsOptional()
+  designation?: string | null;
+
+  @IsNotEmpty()
+  officialEmail: string;
+
+  @IsNotEmpty()
+  phoneNumber: string;
+
+  @IsNotEmpty()
+  businessRegistrationNumber: string;
+
+  @IsOptional()
+  businessRegistrationCertificate?: string | null;
+
+  @IsOptional()
+  officeAddressProof?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  registeredWithEducationCouncils?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  workingWithUkInstitutions?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  workingWithCanadaInstitutions?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  workingWithAustraliaInstitutions?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  primaryStudentMarkets?: string[];
+
+  @IsOptional()
+  @IsInt()
+  averageStudentsPerYearLast2Years?: number | null;
+
+  @IsOptional()
+  @IsArray()
+  mainDestinations?: string[];
+
+  @IsOptional()
+  typicalStudentProfileStrength?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  inHouseVisaSupport?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  numberOfCounsellors?: number;
+
+  @IsOptional()
+  @IsArray()
+  servicesProvided?: ServiceType[];
+
+  @IsOptional()
+  reasonToUseEdvios?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  interestedFeatures?: FeatureType[];
+
+  @IsOptional()
+  agentTier?: string;
+
+  @IsOptional()
+  notes?: string | null;
 }
+
+export class AgentRegisterDto extends CreateAgentDto {}
