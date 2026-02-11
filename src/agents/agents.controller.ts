@@ -65,11 +65,27 @@ export class AgentsController {
     return this.agentsService.getAgentAssignments(assignedAgentQuery);
   }
 
+  @Get('calendly-link')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  async getCalendlyLink(@CurrentUser() user: AuthUser | undefined) {
+    return this.agentsService.getCalendlyLink(user);
+  }
+
+  @Get('agent/:agentId')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.AGENT)
+  async getAgentById(@CurrentUser() user: AuthUser | undefined) {
+    return this.agentsService.getAgentById(user);
+  }
+
   @Patch('change-assignment/:assignmentId/agent/:agentId')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
   async changeAgentAssignment(@Param('assignmentId') assignmentId: string, @Param('agentId') agentId: string) {
     return this.agentsService.changeAgentAssignment(assignmentId, agentId);
   }
+
+
 
 }

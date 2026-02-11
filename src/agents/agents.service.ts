@@ -259,4 +259,31 @@ export class AgentsService {
       },
     });
   }
+
+  async getCalendlyLink(user: AuthUser | undefined) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const agent = await this.prisma.agent.findUnique({
+      where: { id: user.userId },
+      select: { calendlyLink: true },
+    });
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+    return agent.calendlyLink;
+  }
+
+  async getAgentById(user: AuthUser | undefined) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const agent = await this.prisma.agent.findUnique({
+      where: { id: user.userId },
+    });
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+    return agent;
+  }
 }
