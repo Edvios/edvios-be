@@ -7,7 +7,7 @@ import { User, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 import { CurrentUser } from 'src/auth/decorators';
 import { AuthUser } from 'src/auth/types';
-import { AgentRegisterDto } from './dto/create-agent.dto';
+import { AgentProfileData, AgentRegisterDto } from './dto/create-agent.dto';
 
 @Controller('agents')
 export class AgentsController {
@@ -25,6 +25,13 @@ export class AgentsController {
   @UseGuards(JwtAuthGuard)
   async createAgent(@CurrentUser() user: AuthUser | undefined, @Body() agent: AgentRegisterDto) {
     return this.agentsService.createAgent(user, agent);
+  }
+
+  @Patch()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.AGENT)
+  async updateAgent(@CurrentUser() user: AuthUser | undefined, @Body() agent: AgentProfileData) {
+    return this.agentsService.updateAgent(user, agent);
   }
 
   //get the pending agents after registration of agents
