@@ -34,42 +34,50 @@ model User {
 }
 
 model Student {
-  id                       String            @id
-  nationality              String?
-  currentEducationLevel    String?
-  currentInstitution       String?
-  fieldOfStudy             String?
-  gpa                      Float?
-  graduationDate           DateTime?
-  preferredDestination     String?
-  preferredProgram         String?
-  preferredStudyLevel      StudyLevel?
-  preferredIntake          String?
-  englishTest              String?
-  englishScore             String?
-  hasValidPassport         Boolean           @default(false)
-  hasAcademicTranscripts   Boolean           @default(false)
-  hasRecommendationLetters Boolean           @default(false)
-  hasPersonalStatement     Boolean           @default(false)
-  workExperience           String?
-  extraCurricular          String?
-  careerGoals              String?
-  referralSource           String?
-  preferredContactMethod   String?
-  bestTimeToContact        String?
-  additionalQuestions      String?
-  budgetRange              String?
-  currentCity              String?
-  currentCountry           String?
-  dob                      DateTime?
-  marketingConsent         Boolean           @default(false)
-  scholarshipInterest      Boolean           @default(false)
-  createdAt                DateTime          @default(now())
-  email                    String?           @unique
+  id                         String   @id
+
   firstName                String?
   lastName                 String?
-  phone                    String?
-  address                  String?
+  dob                      DateTime?
+  gender                     Gender?
+  nationality                String
+  passportNumber             String   @unique
+  passportExpiryDate         DateTime
+  countryOfResidence         String
+
+  email                      String
+  phone               	     String
+  emergencyContact           String // Name + number combined (or split later)
+
+  highestQualification       String
+  yearOfCompletion           Int?
+  institutionName            String
+  mediumOfInstruction        String?
+  gradesSummary              String?
+  academicCertificates       String[] // file refs / URLs
+
+  englishTestTaken           EnglishTestType @default(NONE)
+  overallScore               Float?
+  testExpiryDate             DateTime?
+
+  intendedIntakeMonth        Int?   // 1–12
+  intendedIntakeYear         Int?
+  preferredCountries         String[]
+  preferredStudyLevel        StudyLevel?
+  preferredFieldOfStudy      String
+
+  estimatedBudget            Float? // tuition + living
+  fundingSource              FundingSource?
+
+  previousVisaRefusal        Boolean @default(false)
+  visaRefusalDetails         String?
+  travelHistory              String?
+  ongoingImmigrationApps     String?
+
+  academicFit                String?
+  visaRiskBand               VisaRiskBand?
+  notes                      String?
+
   applications             Application[]
   agentAssignment          AgentAssignment[]
   user                     User              @relation(fields: [id], references: [id], onDelete: Cascade)
@@ -79,7 +87,45 @@ model Student {
 
 model Agent {
   id              String            @id
-  isSelected     Boolean           @default(false)
+
+  legalName                         String
+  tradingName                       String?
+  agentName                         String
+  calendlyLink                      String?
+  countryOfRegistration             String
+  yearEstablished                   Int?
+  websiteUrl                        String?
+  officeAddress                     String
+
+  contactPersonName                 String
+  designation                       String?
+  officialEmail                     String
+  phoneNumber                       String
+
+  businessRegistrationNumber        String
+  businessRegistrationCertificate   String? // file ref / URL
+  officeAddressProof                String? // file ref / URL
+
+  registeredWithEducationCouncils   Boolean  @default(false)
+  workingWithUkInstitutions         Boolean  @default(false)
+  workingWithCanadaInstitutions     Boolean  @default(false)
+  workingWithAustraliaInstitutions  Boolean  @default(false)
+
+  primaryStudentMarkets             String[] // e.g. ["Sri Lanka", "India"]
+  averageStudentsPerYearLast2Years  Int?
+  mainDestinations                  String[] // e.g. ["UK", "Canada"]
+
+  typicalStudentProfileStrength     String?
+  inHouseVisaSupport                Boolean  @default(false)
+  numberOfCounsellors               Int @default(1)
+
+  servicesProvided                  ServiceType[]
+  reasonToUseEdvios                 String?
+  interestedFeatures                FeatureType[]
+
+  agentTier                         String @default("BASIC")
+  notes                             String?
+
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   user            User              @relation(fields: [id], references: [id], onDelete: Cascade)
@@ -295,4 +341,45 @@ enum MessageStatus {
   SENT
   DELIVERED
   READ
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum EnglishTestType {
+  IELTS
+  PTE
+  DUOLINGO
+  NONE
+}
+
+enum FundingSource {
+  SELF
+  PARENTS
+  SPONSOR
+  LOAN
+  SCHOLARSHIP
+}
+
+enum VisaRiskBand {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ServiceType {
+  ADMISSIONS
+  VISA
+  END_TO_END
+}
+
+enum FeatureType {
+  AI_MATCHING
+  VISA_RISK
+  CRM
+  ANALYTICS
+  DOCUMENT_MANAGEMENT
 }

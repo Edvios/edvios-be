@@ -4,6 +4,8 @@ import { Prisma, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 import { ApplicationsService } from 'src/applications/applications.service';
 import { AuthService } from 'src/auth/auth.service';
+import { AuthUser } from 'src/auth/types';
+import { AgentProfileData, AgentRegisterDto } from './dto/create-agent.dto';
 
 @Injectable()
 export class AgentsService {
@@ -110,8 +112,8 @@ export class AgentsService {
   }
 
   async getAgentAssignments(assignedAgentQuery: agentsGetQueryDto) {
-    const page = assignedAgentQuery.page || 1;
-    const size = assignedAgentQuery.size || 10;
+    const page = Number(assignedAgentQuery.page) || 1;
+    const size = Number(assignedAgentQuery.size) || 10;
     const skip = (page - 1) * size;
     const take = size;
     const where: Prisma.AgentAssignmentWhereInput = {};
@@ -205,5 +207,151 @@ export class AgentsService {
       },
     });
     return assignments;
+  }
+
+  async createAgent(user: AuthUser | undefined, agent: AgentRegisterDto) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    return this.prisma.agent.create({
+      data: {
+        legalName: agent.legalName,
+        tradingName: agent.tradingName ?? undefined,
+        agentName: agent.agentName,
+        calendlyLink: agent.calendlyLink ?? undefined,
+        countryOfRegistration: agent.countryOfRegistration,
+        yearEstablished: agent.yearEstablished ?? undefined,
+        websiteUrl: agent.websiteUrl ?? undefined,
+        officeAddress: agent.officeAddress,
+        contactPersonName: agent.contactPersonName,
+        designation: agent.designation ?? undefined,
+        officialEmail: agent.officialEmail,
+        phoneNumber: agent.phoneNumber,
+        businessRegistrationNumber: agent.businessRegistrationNumber,
+        businessRegistrationCertificate:
+          agent.businessRegistrationCertificate ?? undefined,
+        officeAddressProof: agent.officeAddressProof ?? undefined,
+        registeredWithEducationCouncils:
+          agent.registeredWithEducationCouncils ?? false,
+        workingWithUkInstitutions:
+          agent.workingWithUkInstitutions ?? false,
+        workingWithCanadaInstitutions:
+          agent.workingWithCanadaInstitutions ?? false,
+        workingWithAustraliaInstitutions:
+          agent.workingWithAustraliaInstitutions ?? false,
+        primaryStudentMarkets: agent.primaryStudentMarkets ?? [],
+        averageStudentsPerYearLast2Years:
+          agent.averageStudentsPerYearLast2Years ?? undefined,
+        mainDestinations: agent.mainDestinations ?? [],
+        typicalStudentProfileStrength:
+          agent.typicalStudentProfileStrength ?? undefined,
+        inHouseVisaSupport: agent.inHouseVisaSupport ?? false,
+        numberOfCounsellors: agent.numberOfCounsellors ?? 1,
+        servicesProvided: agent.servicesProvided ?? [],
+        reasonToUseEdvios: agent.reasonToUseEdvios ?? undefined,
+        interestedFeatures: agent.interestedFeatures ?? [],
+        agentTier: agent.agentTier ?? 'BASIC',
+        notes: agent.notes ?? undefined,
+        user: {
+          connect: { id: user.userId },
+        },
+      },
+    });
+  }
+
+  async getCalendlyLink(user: AuthUser | undefined) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const agent = await this.prisma.agent.findUnique({
+      where: { id: user.userId },
+      select: { calendlyLink: true },
+    });
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+    return agent.calendlyLink;
+  }
+
+  async getAgentById(user: AuthUser | undefined) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const agent = await this.prisma.agent.findUnique({
+      where: { id: user.userId },
+    });
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+    return agent;
+  }
+
+  async updateAgent(user: AuthUser | undefined, agent: AgentProfileData) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    return this.prisma.agent.update({
+      where: { id: user.userId },
+      data: {
+        legalName: agent.legalName,
+        tradingName: agent.tradingName ?? undefined,
+        agentName: agent.agentName,
+        calendlyLink: agent.calendlyLink ?? undefined,
+        countryOfRegistration: agent.countryOfRegistration,
+        yearEstablished: agent.yearEstablished ?? undefined,
+        websiteUrl: agent.websiteUrl ?? undefined,
+        officeAddress: agent.officeAddress,
+        contactPersonName: agent.contactPersonName,
+        designation: agent.designation ?? undefined,
+        officialEmail: agent.officialEmail,
+        phoneNumber: agent.phoneNumber,
+        businessRegistrationNumber: agent.businessRegistrationNumber,
+        businessRegistrationCertificate:
+          agent.businessRegistrationCertificate ?? undefined,
+        officeAddressProof: agent.officeAddressProof ?? undefined,
+        registeredWithEducationCouncils:
+          agent.registeredWithEducationCouncils ?? false,
+        workingWithUkInstitutions:
+          agent.workingWithUkInstitutions ?? false,
+        workingWithCanadaInstitutions:
+          agent.workingWithCanadaInstitutions ?? false,
+        workingWithAustraliaInstitutions:
+          agent.workingWithAustraliaInstitutions ?? false,
+        primaryStudentMarkets: agent.primaryStudentMarkets ?? [],
+        averageStudentsPerYearLast2Years:
+          agent.averageStudentsPerYearLast2Years ?? undefined,
+        mainDestinations: agent.mainDestinations ?? [],
+        typicalStudentProfileStrength:
+          agent.typicalStudentProfileStrength ?? undefined,
+        inHouseVisaSupport: agent.inHouseVisaSupport ?? false,
+        numberOfCounsellors: agent.numberOfCounsellors ?? 1,
+        servicesProvided: agent.servicesProvided ?? [],
+        reasonToUseEdvios: agent.reasonToUseEdvios ?? undefined,
+        interestedFeatures: agent.interestedFeatures ?? [],
+        agentTier: agent.agentTier ?? 'BASIC',
+        notes: agent.notes ?? undefined,
+      },
+    });
+  }
+
+  async getCalendlyLinkForStudent(user: AuthUser | undefined) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const assignment = await this.prisma.agentAssignment.findFirst({
+      where: { studentId: user.userId },
+      include: {
+        agent: {
+          select: {
+            calendlyLink: true,
+          },
+        },
+      },
+    });
+    if (!assignment || !assignment.agent) {
+      throw new Error('Agent not found for the student');
+    }
+    return assignment.agent.calendlyLink;
   }
 }

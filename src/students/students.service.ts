@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { studentsGetQueryDto } from './dto/student-query.dto';
 
 @Injectable()
@@ -14,7 +14,8 @@ export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateStudentDto, creatorUserId: string) {
-    const studentData = this.mapStudentData(dto);
+    const studentData = this.mapStudentCreateData(dto);
+
 
     if (!creatorUserId) {
       throw new BadRequestException(
@@ -22,7 +23,7 @@ export class StudentsService {
       );
     }
 
-    // Optionally verify user exists
+    // Verify user exists
     const exists = await this.prisma.user.findUnique({
       where: { id: creatorUserId },
     });
@@ -30,10 +31,20 @@ export class StudentsService {
       throw new NotFoundException(`User ${creatorUserId} not found`);
     }
 
+    // Check if student profile already exists for this user
+    const existingStudent = await this.prisma.student.findUnique({
+      where: { id: creatorUserId },
+    });
+    if (existingStudent) {
+      throw new BadRequestException(
+        `Student profile already exists for user ${creatorUserId}`,
+      );
+    }
+
     const student = await this.prisma.student.create({
       data: {
+        id: creatorUserId,
         ...studentData,
-        user: { connect: { id: creatorUserId } },
       },
       include: { user: true },
     });
@@ -124,7 +135,7 @@ export class StudentsService {
       throw new BadRequestException(`You can only update your own profile`);
     }
 
-    const studentData = this.mapStudentData(dto);
+    const studentData = this.mapStudentUpdateData(dto);
 
     return this.prisma.student.update({
       where: { id },
@@ -154,42 +165,145 @@ export class StudentsService {
     if (!s) throw new NotFoundException(`Student ${id} not found`);
   }
 
-  private mapStudentData(dto: Partial<CreateStudentDto | UpdateStudentDto>) {
-    return {
+  private mapStudentCreateData(
+    dto: CreateStudentDto,
+  ): Omit<Prisma.StudentCreateInput, 'user'> {
+    const data: Omit<Prisma.StudentCreateInput, 'user'> = {
+      // Personal info
       firstName: dto.firstName,
       lastName: dto.lastName,
+      dob: dto.dob ? new Date(dto.dob) : undefined,
+      gender: dto.gender ?? undefined,
+      nationality: dto.nationality,
+      passportNumber: dto.passportNumber,
+      passportExpiryDate: new Date(dto.passportExpiryDate),
+      countryOfResidence: dto.countryOfResidence,
+
+      // Contact
       email: dto.email,
-      phone: dto.phone ?? null,
-      address: dto.address ?? null,
-      nationality: dto.nationality ?? null,
-      currentEducationLevel: dto.currentEducationLevel ?? null,
-      currentInstitution: dto.currentInstitution ?? null,
-      fieldOfStudy: dto.fieldOfStudy ?? null,
-      gpa: dto.gpa ?? null,
-      graduationDate: dto.graduationDate ? new Date(dto.graduationDate) : null,
-      preferredDestination: dto.preferredDestination ?? null,
-      preferredProgram: dto.preferredProgram ?? null,
+      phone: dto.phone,
+      emergencyContact: dto.emergencyContact,
+
+      // Academic background
+      highestQualification: dto.highestQualification,
+      yearOfCompletion: dto.yearOfCompletion ?? null,
+      institutionName: dto.institutionName,
+      mediumOfInstruction: dto.mediumOfInstruction ?? null,
+      gradesSummary: dto.gradesSummary ?? null,
+      academicCertificates: dto.academicCertificates ?? [],
+
+      // English test
+      overallScore: dto.overallScore ?? null,
+      testExpiryDate: dto.testExpiryDate
+        ? new Date(dto.testExpiryDate)
+        : null,
+
+      // Study preferences
+      intendedIntakeMonth: dto.intendedIntakeMonth ?? null,
+      intendedIntakeYear: dto.intendedIntakeYear ?? null,
+      preferredCountries: dto.preferredCountries ?? [],
       preferredStudyLevel: dto.preferredStudyLevel ?? null,
-      preferredIntake: dto.preferredIntake ?? null,
-      englishTest: dto.englishTest ?? null,
-      englishScore: dto.englishScore ?? null,
-      hasValidPassport: dto.hasValidPassport ?? undefined,
-      hasAcademicTranscripts: dto.hasAcademicTranscripts ?? undefined,
-      hasRecommendationLetters: dto.hasRecommendationLetters ?? undefined,
-      hasPersonalStatement: dto.hasPersonalStatement ?? undefined,
-      workExperience: dto.workExperience ?? null,
-      extraCurricular: dto.extraCurricular ?? null,
-      careerGoals: dto.careerGoals ?? null,
-      referralSource: dto.referralSource ?? null,
-      preferredContactMethod: dto.preferredContactMethod ?? null,
-      bestTimeToContact: dto.bestTimeToContact ?? null,
-      additionalQuestions: dto.additionalQuestions ?? null,
-      dob: dto.dob ? new Date(dto.dob) : null,
-      currentCountry: dto.currentCountry ?? null,
-      currentCity: dto.currentCity ?? null,
-      budgetRange: dto.budgetRange ?? null,
-      scholarshipInterest: dto.scholarshipInterest ?? false,
-      marketingConsent: dto.marketingConsent ?? false,
+      preferredFieldOfStudy: dto.preferredFieldOfStudy,
+
+      // Financial
+      estimatedBudget: dto.estimatedBudget ?? null,
+      fundingSource: dto.fundingSource ?? null,
+
+      // Visa / immigration
+      previousVisaRefusal: dto.previousVisaRefusal ?? false,
+      visaRefusalDetails: dto.visaRefusalDetails ?? null,
+      travelHistory: dto.travelHistory ?? null,
+      ongoingImmigrationApps: dto.ongoingImmigrationApps ?? null,
+
+      // Internal / assessment
+      academicFit: dto.academicFit ?? null,
+      visaRiskBand: dto.visaRiskBand ?? null,
+      notes: dto.notes ?? null,
     };
+
+    if (dto.englishTestTaken !== undefined) {
+      data.englishTestTaken = dto.englishTestTaken;
+    }
+
+    return data;
+  }
+
+  private mapStudentUpdateData(dto: UpdateStudentDto): Prisma.StudentUpdateInput {
+    const data: Prisma.StudentUpdateInput = {};
+
+    // Personal info
+    if (dto.firstName !== undefined) data.firstName = dto.firstName;
+    if (dto.lastName !== undefined) data.lastName = dto.lastName;
+    if (dto.dob !== undefined) data.dob = dto.dob ? new Date(dto.dob) : null;
+    if (dto.gender !== undefined) data.gender = dto.gender;
+    if (dto.nationality !== undefined) data.nationality = dto.nationality;
+    if (dto.passportNumber !== undefined)
+      data.passportNumber = dto.passportNumber;
+    if (dto.passportExpiryDate !== undefined)
+      data.passportExpiryDate = new Date(dto.passportExpiryDate);
+    if (dto.countryOfResidence !== undefined)
+      data.countryOfResidence = dto.countryOfResidence;
+
+    // Contact
+    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.phone !== undefined) data.phone = dto.phone;
+    if (dto.emergencyContact !== undefined)
+      data.emergencyContact = dto.emergencyContact;
+
+    // Academic background
+    if (dto.highestQualification !== undefined)
+      data.highestQualification = dto.highestQualification;
+    if (dto.yearOfCompletion !== undefined)
+      data.yearOfCompletion = dto.yearOfCompletion;
+    if (dto.institutionName !== undefined)
+      data.institutionName = dto.institutionName;
+    if (dto.mediumOfInstruction !== undefined)
+      data.mediumOfInstruction = dto.mediumOfInstruction;
+    if (dto.gradesSummary !== undefined) data.gradesSummary = dto.gradesSummary;
+    if (dto.academicCertificates !== undefined)
+      data.academicCertificates = dto.academicCertificates;
+
+    // English test
+    if (dto.englishTestTaken !== undefined)
+      data.englishTestTaken = dto.englishTestTaken;
+    if (dto.overallScore !== undefined) data.overallScore = dto.overallScore;
+    if (dto.testExpiryDate !== undefined)
+      data.testExpiryDate = dto.testExpiryDate
+        ? new Date(dto.testExpiryDate)
+        : null;
+
+    // Study preferences
+    if (dto.intendedIntakeMonth !== undefined)
+      data.intendedIntakeMonth = dto.intendedIntakeMonth;
+    if (dto.intendedIntakeYear !== undefined)
+      data.intendedIntakeYear = dto.intendedIntakeYear;
+    if (dto.preferredCountries !== undefined)
+      data.preferredCountries = dto.preferredCountries;
+    if (dto.preferredStudyLevel !== undefined)
+      data.preferredStudyLevel = dto.preferredStudyLevel;
+    if (dto.preferredFieldOfStudy !== undefined)
+      data.preferredFieldOfStudy = dto.preferredFieldOfStudy;
+
+    // Financial
+    if (dto.estimatedBudget !== undefined)
+      data.estimatedBudget = dto.estimatedBudget;
+    if (dto.fundingSource !== undefined) data.fundingSource = dto.fundingSource;
+
+    // Visa / immigration
+    if (dto.previousVisaRefusal !== undefined)
+      data.previousVisaRefusal = dto.previousVisaRefusal;
+    if (dto.visaRefusalDetails !== undefined)
+      data.visaRefusalDetails = dto.visaRefusalDetails;
+    if (dto.travelHistory !== undefined)
+      data.travelHistory = dto.travelHistory;
+    if (dto.ongoingImmigrationApps !== undefined)
+      data.ongoingImmigrationApps = dto.ongoingImmigrationApps;
+
+    // Internal / assessment
+    if (dto.academicFit !== undefined) data.academicFit = dto.academicFit;
+    if (dto.visaRiskBand !== undefined) data.visaRiskBand = dto.visaRiskBand;
+    if (dto.notes !== undefined) data.notes = dto.notes;
+
+    return data;
   }
 }
