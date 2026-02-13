@@ -1,36 +1,59 @@
+import {
+  EnglishTestType,
+  FundingSource,
+  Gender,
+  StudyLevel,
+  VisaRiskBand,
+} from '@prisma/client';
+
 export class CreateStudentDto {
-  firstName: string;
-  lastName: string;
+  // Personal info
+  firstName?: string | null;
+  lastName?: string | null;
+  dob: string; // ISO string
+  gender?: Gender | null;
+  nationality: string;
+  passportNumber: string;
+  passportExpiryDate: string; // ISO string
+  countryOfResidence: string;
+
+  // Contact
   email: string;
-  phone?: string | null;
-  address?: string | null;
-  nationality?: string | null;
-  currentEducationLevel?: string | null;
-  currentInstitution?: string | null;
-  fieldOfStudy?: string | null;
-  gpa?: number | null;
-  graduationDate?: string | null; // ISO string
-  preferredDestination?: string | null;
-  preferredProgram?: string | null;
-  preferredStudyLevel?: 'BACHELORS' | 'MASTERS' | 'PHD' | 'DIPLOMA' | null;
-  preferredIntake?: string | null;
-  englishTest?: string | null;
-  englishScore?: string | null;
-  hasValidPassport?: boolean;
-  hasAcademicTranscripts?: boolean;
-  hasRecommendationLetters?: boolean;
-  hasPersonalStatement?: boolean;
-  workExperience?: string | null;
-  extraCurricular?: string | null;
-  careerGoals?: string | null;
-  referralSource?: string | null;
-  preferredContactMethod?: string | null;
-  bestTimeToContact?: string | null;
-  additionalQuestions?: string | null;
-  dob?: string | null; // ISO string
-  currentCountry?: string | null;
-  currentCity?: string | null;
-  budgetRange?: string | null;
-  scholarshipInterest?: boolean;
-  marketingConsent?: boolean;
+  phone: string;
+  emergencyContact: string;
+
+  // Academic background
+  highestQualification: string;
+  yearOfCompletion?: number | null;
+  institutionName: string;
+  mediumOfInstruction?: string | null;
+  gradesSummary?: string | null;
+  academicCertificates?: string[];
+
+  // English test
+  englishTestTaken?: EnglishTestType;
+  overallScore?: number | null;
+  testExpiryDate?: string | null; // ISO string
+
+  // Study preferences
+  intendedIntakeMonth?: number | null; // 1–12
+  intendedIntakeYear?: number | null;
+  preferredCountries?: string[];
+  preferredStudyLevel?: StudyLevel | null;
+  preferredFieldOfStudy: string;
+
+  // Financial
+  estimatedBudget?: number | null;
+  fundingSource?: FundingSource | null;
+
+  // Visa / immigration
+  previousVisaRefusal?: boolean;
+  visaRefusalDetails?: string | null;
+  travelHistory?: string | null;
+  ongoingImmigrationApps?: string | null;
+
+  // Internal / assessment
+  academicFit?: string | null;
+  visaRiskBand?: VisaRiskBand | null;
+  notes?: string | null;
 }

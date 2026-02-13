@@ -7,7 +7,7 @@ import { User, UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 import { CurrentUser } from 'src/auth/decorators';
 import { AuthUser } from 'src/auth/types';
-import { AgentRegisterDto } from './dto/create-agent.dto';
+import { AgentProfileData, AgentRegisterDto } from './dto/create-agent.dto';
 
 @Controller('agents')
 export class AgentsController {
@@ -25,6 +25,13 @@ export class AgentsController {
   @UseGuards(JwtAuthGuard)
   async createAgent(@CurrentUser() user: AuthUser | undefined, @Body() agent: AgentRegisterDto) {
     return this.agentsService.createAgent(user, agent);
+  }
+
+  @Patch()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.AGENT)
+  async updateAgent(@CurrentUser() user: AuthUser | undefined, @Body() agent: AgentProfileData) {
+    return this.agentsService.updateAgent(user, agent);
   }
 
   //get the pending agents after registration of agents
@@ -65,11 +72,35 @@ export class AgentsController {
     return this.agentsService.getAgentAssignments(assignedAgentQuery);
   }
 
+  @Get('calendly-link')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN, UserRole.AGENT)
+  async getCalendlyLink(@CurrentUser() user: AuthUser | undefined) {
+    return this.agentsService.getCalendlyLink(user);
+  }
+
+  //get the calendly link for a student based on their assigned agent
+  @Get('calendly-link-student')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.STUDENT)
+  async getCalendlyLinkForStudent(@CurrentUser() user: AuthUser | undefined) {
+    return this.agentsService.getCalendlyLinkForStudent(user);
+  }
+
+  @Get('agent/:agentId')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.AGENT)
+  async getAgentById(@CurrentUser() user: AuthUser | undefined) {
+    return this.agentsService.getAgentById(user);
+  }
+
   @Patch('change-assignment/:assignmentId/agent/:agentId')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
   async changeAgentAssignment(@Param('assignmentId') assignmentId: string, @Param('agentId') agentId: string) {
     return this.agentsService.changeAgentAssignment(assignmentId, agentId);
   }
+
+
 
 }
