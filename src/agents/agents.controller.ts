@@ -79,6 +79,14 @@ export class AgentsController {
     return this.agentsService.getCalendlyLink(user);
   }
 
+  //get the calendly link for a student based on their assigned agent
+  @Get('calendly-link-student')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.STUDENT)
+  async getCalendlyLinkForStudent(@CurrentUser() user: AuthUser | undefined) {
+    return this.agentsService.getCalendlyLinkForStudent(user);
+  }
+
   @Get('agent/:agentId')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.AGENT)

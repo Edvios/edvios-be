@@ -334,4 +334,24 @@ export class AgentsService {
       },
     });
   }
+
+  async getCalendlyLinkForStudent(user: AuthUser | undefined) {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const assignment = await this.prisma.agentAssignment.findFirst({
+      where: { studentId: user.userId },
+      include: {
+        agent: {
+          select: {
+            calendlyLink: true,
+          },
+        },
+      },
+    });
+    if (!assignment || !assignment.agent) {
+      throw new Error('Agent not found for the student');
+    }
+    return assignment.agent.calendlyLink;
+  }
 }
