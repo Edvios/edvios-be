@@ -221,7 +221,7 @@ export class AgentsService {
     }
     const agentData = await this.prisma.$transaction(async (tx) => {
 
-      await tx.agent.create({
+      const createdAgent = await tx.agent.create({
         data: {
           legalName: agent.legalName,
           tradingName: agent.tradingName ?? undefined,
@@ -266,14 +266,29 @@ export class AgentsService {
         },
       });
 
-        await tx.user.update({
-          where: { id: user.userId },
-          data: { role: UserRole.PENDING_AGENT },
+      await tx.user.update({
+        where: { id: user.userId },
+        data: { role: UserRole.PENDING_AGENT },
+      });
+
+
+      if (agent.businessRegistrationCertificate) {
+        const documentsToCreate = {
+          userId: user.userId,
+          name: 'Business Registration Certificate',
+          type: 'BUSINESS_REGISTRATION_CERTIFICATE',
+          url: agent.businessRegistrationCertificate,
+        };
+        await tx.document.create({
+          data: documentsToCreate,
         });
+      }
+      
+      return createdAgent;
 
     });
 
-     try {
+    try {
       const { error: updateError } =
         await this.supabaseAdmin.auth.admin.updateUserById(user.userId, {
           user_metadata: {
