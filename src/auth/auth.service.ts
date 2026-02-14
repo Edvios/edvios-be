@@ -4,53 +4,24 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, LoginDto, RegisterDto } from './dto';
-import {
-  AuthResponse,
-  createClient,
-  SupabaseClient,
-} from '@supabase/supabase-js';
+import { CreateUserDto, LoginDto } from './dto';
+import { AuthResponse } from '@supabase/supabase-js';
 import { UserRole } from '@prisma/client';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Injectable()
 export class AuthService {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  private readonly supabase: SupabaseClient = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-  );
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly supabaseService: SupabaseService,
+  ) {}
 
-  constructor(private prisma: PrismaService) {}
+  private get supabase() {
+    return this.supabaseService.client;
+  }
 
-  async register(registerDto: RegisterDto) {
-    const { email, password, firstName, lastName, role, phone } = registerDto;
-
-    try {
-      const { data, error }: AuthResponse = await this.supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            firstName,
-            lastName,
-            role,
-          },
-        },
-      });
-      console.log('Supabase signUp data:', data, phone);
-      if (error) {
-        console.error('Supabase signUp error:', error);
-        throw new BadRequestException(error.message);
-      }
-
-      return {
-        message: 'User registered successfully',
-      };
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Registration failed';
-      throw new BadRequestException(message);
-    }
+  private get supabaseAdmin() {
+    return this.supabaseService.adminClient;
   }
 
   async createUser(createUserDto: CreateUserDto, creatorUserId: string) {
@@ -108,13 +79,6 @@ export class AuthService {
         message: 'Login successful',
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-        // user: {
-        //   id: user.id,
-        //   email: user.email,
-        //   firstName: user.firstName,
-        //   lastName: user.lastName,
-        //   role: user.role,
-        // },
       };
     } catch (error: unknown) {
       if (error instanceof UnauthorizedException) {
@@ -123,26 +87,6 @@ export class AuthService {
       const message =
         error instanceof Error ? error.message : 'Authentication failed';
       throw new UnauthorizedException(message);
-    }
-  }
-
-  async refreshToken(refreshToken: string) {
-    try {
-      const { data, error }: AuthResponse =
-        await this.supabase.auth.refreshSession({
-          refresh_token: refreshToken,
-        });
-
-      if (error || !data.session) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      return {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      };
-    } catch {
-      throw new UnauthorizedException('Token refresh failed');
     }
   }
 
@@ -176,15 +120,8 @@ export class AuthService {
         data: { role: newRole },
       });
 
-      // Update user metadata in Supabase Auth with service role key
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const supabaseAdmin: SupabaseClient = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      );
-
       const { error: updateError } =
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
+        await this.supabaseAdmin.auth.admin.updateUserById(userId, {
           user_metadata: {
             role: newRole,
           },
@@ -215,14 +152,14 @@ export class AuthService {
   }
 
   async deleteUser(userId: string) {
-    const supabaseAdmin = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    // const supabaseAdmin = createClient(
+    //   process.env.SUPABASE_URL!,
+    //   process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    // );
 
     try {
       const { error: supabaseError } =
-        await supabaseAdmin.auth.admin.deleteUser(userId);
+        await this.supabaseAdmin.auth.admin.deleteUser(userId);
 
       if (supabaseError) {
         throw new Error(supabaseError.message);

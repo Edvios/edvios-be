@@ -6,6 +6,7 @@ import { ApplicationsService } from 'src/applications/applications.service';
 import { AuthService } from 'src/auth/auth.service';
 import { AuthUser } from 'src/auth/types';
 import { AgentProfileData, AgentRegisterDto } from './dto/create-agent.dto';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Injectable()
 export class AgentsService {
@@ -13,7 +14,12 @@ export class AgentsService {
     private prisma: PrismaService,
     private applicationsService: ApplicationsService,
     private authService: AuthService,
-  ) {}
+    private readonly supabaseService: SupabaseService,
+  ) { }
+
+  private get supabaseAdmin() {
+    return this.supabaseService.adminClient;
+  }
 
   async getPendingAgents() {
     const pendingAgents = await this.prisma.user.findMany({
@@ -98,12 +104,12 @@ export class AgentsService {
   async changeAgentAssignment(assignmentId: string, agentId: string) {
     // Ensure agent exists
     const agent = await this.prisma.user.findUnique({
-      where: { id: agentId},
+      where: { id: agentId },
     });
     if (!agent) {
       throw new Error(`Agent ${agentId} not found or not valid`);
     }
-    
+
     // Change agent assignment
     return this.prisma.agentAssignment.update({
       where: { id: assignmentId },
@@ -124,12 +130,12 @@ export class AgentsService {
           role:
             assignedAgentQuery.filter === 'ALL'
               ? {
-                  in: [
-                    UserRole.AGENT,
-                    UserRole.PENDING_AGENT,
-                    UserRole.SELECTED_AGENT,
-                  ],
-                }
+                in: [
+                  UserRole.AGENT,
+                  UserRole.PENDING_AGENT,
+                  UserRole.SELECTED_AGENT,
+                ],
+              }
               : assignedAgentQuery.filter,
         },
       };
@@ -182,26 +188,26 @@ export class AgentsService {
       take,
       include: {
         student: {
-          select: { 
+          select: {
             id: true,
             firstName: true,
             lastName: true,
             email: true,
             phone: true
-           },
+          },
         },
         agent: {
-          select: { 
+          select: {
             id: true,
             user: {
               select: {
                 firstName: true,
-                lastName: true,                
+                lastName: true,
                 email: true,
                 phone: true
               }
             }
-           },
+          },
 
         },
       },
@@ -213,51 +219,76 @@ export class AgentsService {
     if (!user) {
       throw new Error('User not authenticated');
     }
+    const agentData = await this.prisma.$transaction(async (tx) => {
 
-    return this.prisma.agent.create({
-      data: {
-        legalName: agent.legalName,
-        tradingName: agent.tradingName ?? undefined,
-        agentName: agent.agentName,
-        calendlyLink: agent.calendlyLink ?? undefined,
-        countryOfRegistration: agent.countryOfRegistration,
-        yearEstablished: agent.yearEstablished ?? undefined,
-        websiteUrl: agent.websiteUrl ?? undefined,
-        officeAddress: agent.officeAddress,
-        contactPersonName: agent.contactPersonName,
-        designation: agent.designation ?? undefined,
-        officialEmail: agent.officialEmail,
-        phoneNumber: agent.phoneNumber,
-        businessRegistrationNumber: agent.businessRegistrationNumber,
-        businessRegistrationCertificate:
-          agent.businessRegistrationCertificate ?? undefined,
-        officeAddressProof: agent.officeAddressProof ?? undefined,
-        registeredWithEducationCouncils:
-          agent.registeredWithEducationCouncils ?? false,
-        workingWithUkInstitutions:
-          agent.workingWithUkInstitutions ?? false,
-        workingWithCanadaInstitutions:
-          agent.workingWithCanadaInstitutions ?? false,
-        workingWithAustraliaInstitutions:
-          agent.workingWithAustraliaInstitutions ?? false,
-        primaryStudentMarkets: agent.primaryStudentMarkets ?? [],
-        averageStudentsPerYearLast2Years:
-          agent.averageStudentsPerYearLast2Years ?? undefined,
-        mainDestinations: agent.mainDestinations ?? [],
-        typicalStudentProfileStrength:
-          agent.typicalStudentProfileStrength ?? undefined,
-        inHouseVisaSupport: agent.inHouseVisaSupport ?? false,
-        numberOfCounsellors: agent.numberOfCounsellors ?? 1,
-        servicesProvided: agent.servicesProvided ?? [],
-        reasonToUseEdvios: agent.reasonToUseEdvios ?? undefined,
-        interestedFeatures: agent.interestedFeatures ?? [],
-        agentTier: agent.agentTier ?? 'BASIC',
-        notes: agent.notes ?? undefined,
-        user: {
-          connect: { id: user.userId },
+      await tx.agent.create({
+        data: {
+          legalName: agent.legalName,
+          tradingName: agent.tradingName ?? undefined,
+          agentName: agent.agentName,
+          calendlyLink: agent.calendlyLink ?? undefined,
+          countryOfRegistration: agent.countryOfRegistration,
+          yearEstablished: agent.yearEstablished ?? undefined,
+          websiteUrl: agent.websiteUrl ?? undefined,
+          officeAddress: agent.officeAddress,
+          contactPersonName: agent.contactPersonName,
+          designation: agent.designation ?? undefined,
+          officialEmail: agent.officialEmail,
+          phoneNumber: agent.phoneNumber,
+          businessRegistrationNumber: agent.businessRegistrationNumber,
+          businessRegistrationCertificate:
+            agent.businessRegistrationCertificate ?? undefined,
+          officeAddressProof: agent.officeAddressProof ?? undefined,
+          registeredWithEducationCouncils:
+            agent.registeredWithEducationCouncils ?? false,
+          workingWithUkInstitutions:
+            agent.workingWithUkInstitutions ?? false,
+          workingWithCanadaInstitutions:
+            agent.workingWithCanadaInstitutions ?? false,
+          workingWithAustraliaInstitutions:
+            agent.workingWithAustraliaInstitutions ?? false,
+          primaryStudentMarkets: agent.primaryStudentMarkets ?? [],
+          averageStudentsPerYearLast2Years:
+            agent.averageStudentsPerYearLast2Years ?? undefined,
+          mainDestinations: agent.mainDestinations ?? [],
+          typicalStudentProfileStrength:
+            agent.typicalStudentProfileStrength ?? undefined,
+          inHouseVisaSupport: agent.inHouseVisaSupport ?? false,
+          numberOfCounsellors: agent.numberOfCounsellors ?? 1,
+          servicesProvided: agent.servicesProvided ?? [],
+          reasonToUseEdvios: agent.reasonToUseEdvios ?? undefined,
+          interestedFeatures: agent.interestedFeatures ?? [],
+          agentTier: agent.agentTier ?? 'BASIC',
+          notes: agent.notes ?? undefined,
+          user: {
+            connect: { id: user.userId },
+          },
         },
-      },
+      });
+
+        await tx.user.update({
+          where: { id: user.userId },
+          data: { role: UserRole.PENDING_AGENT },
+        });
+
     });
+
+     try {
+      const { error: updateError } =
+        await this.supabaseAdmin.auth.admin.updateUserById(user.userId, {
+          user_metadata: {
+            role: UserRole.PENDING_AGENT,
+          },
+        });
+
+      if (updateError) {
+        console.error('Supabase metadata update failed:', updateError);
+      }
+    } catch (err) {
+      console.error('Supabase metadata update threw:', err);
+    }
+
+    return agentData;
   }
 
   async getCalendlyLink(user: AuthUser | undefined) {
