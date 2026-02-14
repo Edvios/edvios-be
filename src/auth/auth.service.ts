@@ -28,6 +28,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
+    console.log('AuthService.register called for:', registerDto.email);
     const { email, password, firstName, lastName, role, phone } = registerDto;
 
     try {
@@ -65,11 +66,10 @@ export class AuthService {
       }
 
       // Generate verification token
-      const { token: verificationToken, expires: verificationTokenExpires } =
-        generateVerificationToken();
+      const tokenData = generateVerificationToken();
 
       try {
-        // Create user in our database with PENDING status and verification token
+        // Create user in our database with ACTIVE status (but emailVerified: false)
         await this.prisma.user.create({
           data: {
             id: data.user.id,
@@ -80,8 +80,8 @@ export class AuthService {
             phone: phone ?? null,
             status: UserStatus.ACTIVE,
             emailVerified: false,
-            verificationToken,
-            verificationTokenExpires,
+            verificationToken: tokenData.token,
+            verificationTokenExpires: tokenData.expires,
           },
         });
       } catch (prismaError) {
@@ -91,13 +91,14 @@ export class AuthService {
         );
       }
 
-      // Send verification email asynchronously to improve UX speed
-      this.mailService
-        .sendVerificationEmail(email, verificationToken)
-        .then(() => {})
-        .catch((err) =>
-          console.error(`Failed to send verification email to ${email}:`, err),
-        );
+      // Send verification email - await it to ensure it finishes or fails visibly
+      try {
+        await this.mailService.sendVerificationEmail(email, tokenData.token);
+      } catch (err) {
+        console.error(`Failed to send verification email to ${email}:`, err);
+        // Note: we don't throw here to avoid failing registration if only email fails
+        // but since we await it, the error will be logged.
+      }
 
       return {
         message:
@@ -111,7 +112,16 @@ export class AuthService {
   }
 
   async createUser(createUserDto: CreateUserDto, creatorUserId: string) {
+    console.log(
+      'AuthService.createUser called for:',
+      createUserDto.email,
+      'userId:',
+      creatorUserId,
+    );
     const { email, firstName, lastName, role, phone } = createUserDto;
+
+    // Generate verification token
+    const tokenData = generateVerificationToken();
 
     try {
       const user = await this.prisma.user.create({
@@ -122,11 +132,25 @@ export class AuthService {
           lastName,
           role,
           phone: phone ?? null,
+          status: UserStatus.ACTIVE,
+          emailVerified: false,
+          verificationToken: tokenData.token,
+          verificationTokenExpires: tokenData.expires,
         },
       });
 
+      console.log('User created in DB, sending email to:', email);
+      // Send verification email
+      try {
+        await this.mailService.sendVerificationEmail(email, tokenData.token);
+        console.log('Verification email sent successfully to:', email);
+      } catch (err) {
+        console.error(`Failed to send verification email to ${email}:`, err);
+      }
+
       return {
-        message: 'User registered successfully',
+        message:
+          'User registered successfully. Please check your email to verify your account.',
         user: {
           id: user.id,
           email: user.email,
@@ -138,7 +162,7 @@ export class AuthService {
       };
     } catch (error) {
       console.error('Prisma createUser error:', error);
-      throw new BadRequestException('Failed to create user');
+      throw new BadRequestException('Failed to create user in local database');
     }
   }
 
@@ -167,10 +191,32 @@ export class AuthService {
       });
 
       if (user && !user.emailVerified) {
+        console.log(
+          'Unverified user attempt to login:',
+          email,
+          'Sending new email.',
+        );
+        // Send new verification email if they try to login while unverified
+        const tokenData = generateVerificationToken();
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            verificationToken: tokenData.token,
+            verificationTokenExpires: tokenData.expires,
+          },
+        });
+
+        try {
+          await this.mailService.sendVerificationEmail(email, tokenData.token);
+          console.log('Verification email resent on login to:', email);
+        } catch (err) {
+          console.error('Failed to send verification email on login:', err);
+        }
+
         // Sign the user out of Supabase if they aren't verified in our DB
         await this.supabase.auth.signOut();
         throw new UnauthorizedException(
-          'Please verify your email address before logging in.',
+          'Email not verified. A new verification link has been sent to your email.',
         );
       }
 
@@ -370,13 +416,12 @@ export class AuthService {
       },
     });
 
-    // Send verification email asynchronously
-    this.mailService
-      .sendVerificationEmail(email, verificationToken)
-      .then(() => {})
-      .catch((err) =>
-        console.error(`Failed to resend verification email to ${email}:`, err),
-      );
+    // Send verification email
+    try {
+      await this.mailService.sendVerificationEmail(email, verificationToken);
+    } catch (err) {
+      console.error(`Failed to resend verification email to ${email}:`, err);
+    }
 
     return { message: 'Verification email has been resent.' };
   }
