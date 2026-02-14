@@ -43,7 +43,7 @@ export class StudentsService {
 
     const student = await this.prisma.student.create({
       data: {
-        id: creatorUserId,
+        
         ...studentData,
         user: {
           connect: { id: creatorUserId },
