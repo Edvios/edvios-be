@@ -29,6 +29,10 @@ model User {
   phone     String?
   agent     Agent?
   student   Student?
+emailVerified             Boolean    @default(false)
+  verificationToken         String?    @unique
+  verificationTokenExpires  DateTime?
+  documents Document[]
 
   @@map("users")
 }
@@ -279,11 +283,27 @@ model AgentNotification {
   @@map("agent_notifications")
 }
 
+model Document {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  type        String
+  url         String
+  uploadedAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
 enum UserRole {
   SUPER_ADMIN
   ADMIN
   AGENT
   STUDENT
+  PARTIAL_REGISTER_STUDENT
+  PARTIAL_REGISTER_AGENT
   PENDING_AGENT
   REJECTED_AGENT
   SELECTED_AGENT

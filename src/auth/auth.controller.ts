@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   Req,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginDto, RegisterDto } from './dto';
@@ -20,13 +21,13 @@ import { JwtStrategyReturnDto } from './dto/jwt-stratergy-return.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
-  
+
   //create user after registration
   @Post('create-user')
   @UseGuards(JwtAuthGuard)
@@ -89,5 +90,15 @@ export class AuthController {
   @Roles(UserRole.ADMIN)
   async rejectAgent(@Param('userId') userId: string) {
     return this.authService.deleteUser(userId);
+  }
+
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body('email') email: string) {
+    return this.authService.resendVerificationEmail(email);
   }
 }
