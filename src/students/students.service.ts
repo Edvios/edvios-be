@@ -45,6 +45,9 @@ export class StudentsService {
       data: {
         id: creatorUserId,
         ...studentData,
+        user: {
+          connect: { id: creatorUserId },
+        },
       },
       include: { user: true },
     });
