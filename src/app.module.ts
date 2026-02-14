@@ -15,6 +15,7 @@ import { ChatModule } from './chat/chat.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SupabaseModule } from './supabase/supabase.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { SupabaseModule } from './supabase/supabase.module';
     ChatModule,
     ApplicationsModule,
     NotificationsModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
