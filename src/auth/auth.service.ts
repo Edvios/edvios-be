@@ -42,8 +42,6 @@ export class AuthService {
         );
       }
 
-      console.log('Registering user in Supabase:', email);
-
       const { data, error }: AuthResponse = await this.supabase.auth.signUp({
         email,
         password,
@@ -66,8 +64,6 @@ export class AuthService {
         throw new BadRequestException('User creation failed in Supabase');
       }
 
-      console.log('Supabase user created:', data.user.id);
-
       // Generate verification token
       const { token: verificationToken, expires: verificationTokenExpires } =
         generateVerificationToken();
@@ -88,7 +84,6 @@ export class AuthService {
             verificationTokenExpires,
           },
         });
-        console.log('User created in Prisma');
       } catch (prismaError) {
         console.error('Prisma creation error:', prismaError);
         throw new BadRequestException(
@@ -99,7 +94,7 @@ export class AuthService {
       // Send verification email asynchronously to improve UX speed
       this.mailService
         .sendVerificationEmail(email, verificationToken)
-        .then(() => console.log(`Verification email sent to ${email} successfully.`))
+        .then(() => { })
         .catch((err) => console.error(`Failed to send verification email to ${email}:`, err));
 
       return {
@@ -113,8 +108,6 @@ export class AuthService {
       throw new BadRequestException(message);
     }
   }
-
-
 
   async createUser(createUserDto: CreateUserDto, creatorUserId: string) {
     const { email, firstName, lastName, role, phone } = createUserDto;
@@ -143,8 +136,8 @@ export class AuthService {
         },
       };
     } catch (error) {
-      console.error('Supabase createUser error:', error);
-      throw new BadRequestException(error);
+      console.error('Prisma createUser error:', error);
+      throw new BadRequestException('Failed to create user');
     }
   }
 
@@ -184,13 +177,6 @@ export class AuthService {
         message: 'Login successful',
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-        // user: {
-        //   id: user.id,
-        //   email: user.email,
-        //   firstName: user.firstName,
-        //   lastName: user.lastName,
-        //   role: user.role,
-        // },
       };
     } catch (error: unknown) {
       if (error instanceof UnauthorizedException) {
@@ -253,7 +239,6 @@ export class AuthService {
       });
 
       // Update user metadata in Supabase Auth with service role key
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const supabaseAdmin: SupabaseClient = createClient(
         process.env.SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -304,10 +289,8 @@ export class AuthService {
         throw new Error(supabaseError.message);
       }
 
-      await this.prisma.$transaction(async (tx) => {
-        await tx.user.delete({
-          where: { id: userId },
-        });
+      await this.prisma.user.delete({
+        where: { id: userId },
       });
 
       return { message: 'User deleted successfully' };
@@ -389,9 +372,7 @@ export class AuthService {
     // Send verification email asynchronously
     this.mailService
       .sendVerificationEmail(email, verificationToken)
-      .then(() =>
-        console.log(`Verification email resent to ${email} successfully.`),
-      )
+      .then(() => { })
       .catch((err) =>
         console.error(`Failed to resend verification email to ${email}:`, err),
       );

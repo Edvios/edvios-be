@@ -43,9 +43,7 @@ export class MailService {
         };
 
         try {
-            console.log(`Attempting to send verification email to: ${email}`);
             const result = await this.transporter.sendMail(mailOptions);
-            console.log(`Email sent successfully: ${result.messageId}`);
             return result;
         } catch (error) {
             console.error('Error sending verification email:', error);
