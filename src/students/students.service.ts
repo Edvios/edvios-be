@@ -16,7 +16,6 @@ export class StudentsService {
   async create(dto: CreateStudentDto, creatorUserId: string) {
     const studentData = this.mapStudentCreateData(dto);
 
-
     if (!creatorUserId) {
       throw new BadRequestException(
         'Provide either nested `user` or `userId` to link an existing user',
@@ -43,7 +42,6 @@ export class StudentsService {
 
     const student = await this.prisma.student.create({
       data: {
-        
         ...studentData,
         user: {
           connect: { id: creatorUserId },
@@ -197,9 +195,7 @@ export class StudentsService {
 
       // English test
       overallScore: dto.overallScore ?? null,
-      testExpiryDate: dto.testExpiryDate
-        ? new Date(dto.testExpiryDate)
-        : null,
+      testExpiryDate: dto.testExpiryDate ? new Date(dto.testExpiryDate) : null,
 
       // Study preferences
       intendedIntakeMonth: dto.intendedIntakeMonth ?? null,
@@ -231,7 +227,9 @@ export class StudentsService {
     return data;
   }
 
-  private mapStudentUpdateData(dto: UpdateStudentDto): Prisma.StudentUpdateInput {
+  private mapStudentUpdateData(
+    dto: UpdateStudentDto,
+  ): Prisma.StudentUpdateInput {
     const data: Prisma.StudentUpdateInput = {};
 
     // Personal info
@@ -297,8 +295,7 @@ export class StudentsService {
       data.previousVisaRefusal = dto.previousVisaRefusal;
     if (dto.visaRefusalDetails !== undefined)
       data.visaRefusalDetails = dto.visaRefusalDetails;
-    if (dto.travelHistory !== undefined)
-      data.travelHistory = dto.travelHistory;
+    if (dto.travelHistory !== undefined) data.travelHistory = dto.travelHistory;
     if (dto.ongoingImmigrationApps !== undefined)
       data.ongoingImmigrationApps = dto.ongoingImmigrationApps;
 

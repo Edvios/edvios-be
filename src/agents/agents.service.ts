@@ -98,12 +98,12 @@ export class AgentsService {
   async changeAgentAssignment(assignmentId: string, agentId: string) {
     // Ensure agent exists
     const agent = await this.prisma.user.findUnique({
-      where: { id: agentId},
+      where: { id: agentId },
     });
     if (!agent) {
       throw new Error(`Agent ${agentId} not found or not valid`);
     }
-    
+
     // Change agent assignment
     return this.prisma.agentAssignment.update({
       where: { id: assignmentId },
@@ -182,27 +182,26 @@ export class AgentsService {
       take,
       include: {
         student: {
-          select: { 
+          select: {
             id: true,
             firstName: true,
             lastName: true,
             email: true,
-            phone: true
-           },
+            phone: true,
+          },
         },
         agent: {
-          select: { 
+          select: {
             id: true,
             user: {
               select: {
                 firstName: true,
-                lastName: true,                
+                lastName: true,
                 email: true,
-                phone: true
-              }
-            }
-           },
-
+                phone: true,
+              },
+            },
+          },
         },
       },
     });
@@ -234,8 +233,7 @@ export class AgentsService {
         officeAddressProof: agent.officeAddressProof ?? undefined,
         registeredWithEducationCouncils:
           agent.registeredWithEducationCouncils ?? false,
-        workingWithUkInstitutions:
-          agent.workingWithUkInstitutions ?? false,
+        workingWithUkInstitutions: agent.workingWithUkInstitutions ?? false,
         workingWithCanadaInstitutions:
           agent.workingWithCanadaInstitutions ?? false,
         workingWithAustraliaInstitutions:
@@ -312,8 +310,7 @@ export class AgentsService {
         officeAddressProof: agent.officeAddressProof ?? undefined,
         registeredWithEducationCouncils:
           agent.registeredWithEducationCouncils ?? false,
-        workingWithUkInstitutions:
-          agent.workingWithUkInstitutions ?? false,
+        workingWithUkInstitutions: agent.workingWithUkInstitutions ?? false,
         workingWithCanadaInstitutions:
           agent.workingWithCanadaInstitutions ?? false,
         workingWithAustraliaInstitutions:

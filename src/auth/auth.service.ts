@@ -25,7 +25,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private mailService: MailService,
-  ) { }
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { email, password, firstName, lastName, role, phone } = registerDto;
@@ -94,14 +94,15 @@ export class AuthService {
       // Send verification email asynchronously to improve UX speed
       this.mailService
         .sendVerificationEmail(email, verificationToken)
-        .then(() => { })
-        .catch((err) => console.error(`Failed to send verification email to ${email}:`, err));
+        .then(() => {})
+        .catch((err) =>
+          console.error(`Failed to send verification email to ${email}:`, err),
+        );
 
       return {
         message:
           'User registered successfully. Please check your email to verify your account.',
       };
-
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : 'Registration failed';
@@ -239,7 +240,7 @@ export class AuthService {
       });
 
       // Update user metadata in Supabase Auth with service role key
-      const supabaseAdmin: SupabaseClient = createClient(
+      const supabaseAdmin = createClient(
         process.env.SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
       );
@@ -372,7 +373,7 @@ export class AuthService {
     // Send verification email asynchronously
     this.mailService
       .sendVerificationEmail(email, verificationToken)
-      .then(() => { })
+      .then(() => {})
       .catch((err) =>
         console.error(`Failed to resend verification email to ${email}:`, err),
       );
@@ -380,4 +381,3 @@ export class AuthService {
     return { message: 'Verification email has been resent.' };
   }
 }
-

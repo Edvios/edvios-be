@@ -4,29 +4,29 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-    private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter;
 
-    constructor(private configService: ConfigService) {
-        this.transporter = nodemailer.createTransport({
-            host: this.configService.get<string>('SMTP_HOST'),
-            port: this.configService.get<number>('SMTP_PORT'),
-            secure: true, // true for 465, false for other ports
-            auth: {
-                user: this.configService.get<string>('SMTP_USER'),
-                pass: this.configService.get<string>('SMTP_PASS'),
-            },
-        });
-    }
+  constructor(private configService: ConfigService) {
+    this.transporter = nodemailer.createTransport({
+      host: this.configService.get<string>('SMTP_HOST'),
+      port: this.configService.get<number>('SMTP_PORT'),
+      secure: true, // true for 465, false for other ports
+      auth: {
+        user: this.configService.get<string>('SMTP_USER'),
+        pass: this.configService.get<string>('SMTP_PASS'),
+      },
+    });
+  }
 
-    async sendVerificationEmail(email: string, token: string) {
-        const appUrl = this.configService.get<string>('APP_URL');
-        const verificationUrl = `${appUrl}/auth/verify-email?token=${token}`;
+  async sendVerificationEmail(email: string, token: string) {
+    const appUrl = this.configService.get<string>('APP_URL');
+    const verificationUrl = `${appUrl}/auth/verify-email?token=${token}`;
 
-        const mailOptions = {
-            from: `"Edvios" <${this.configService.get<string>('SMTP_USER')}>`,
-            to: email,
-            subject: 'Verify Your Email - Edvios',
-            html: `
+    const mailOptions = {
+      from: `"Edvios" <${this.configService.get<string>('SMTP_USER')}>`,
+      to: email,
+      subject: 'Verify Your Email - Edvios',
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <h2 style="color: #4CAF50; text-align: center;">Welcome to Edvios!</h2>
           <p>Hi there,</p>
@@ -40,14 +40,13 @@ export class MailService {
           <p style="font-size: 12px; color: #999; text-align: center;">This link will expire in 24 hours. If you did not create an account, please ignore this email.</p>
         </div>
       `,
-        };
+    };
 
-        try {
-            const result = await this.transporter.sendMail(mailOptions);
-            return result;
-        } catch (error) {
-            console.error('Error sending verification email:', error);
-            throw new Error('Failed to send verification email');
-        }
+    try {
+      await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      throw new Error('Failed to send verification email');
     }
+  }
 }
