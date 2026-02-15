@@ -14,6 +14,8 @@ import { AgentsModule } from './agents/agents.module';
 import { ChatModule } from './chat/chat.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SupabaseModule } from './supabase/supabase.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       envFilePath: '.env',
     }),
     PrismaModule,
+    SupabaseModule,
     TestModule,
     AuthModule,
     ExampleModule,
@@ -33,6 +36,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     ChatModule,
     ApplicationsModule,
     NotificationsModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

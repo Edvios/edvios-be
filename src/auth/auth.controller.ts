@@ -8,7 +8,7 @@ import {
   Param,
   UnauthorizedException,
   Req,
-  Delete,
+  Delete
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginDto, RegisterDto } from './dto';
@@ -21,11 +21,6 @@ import { JwtStrategyReturnDto } from './dto/jwt-stratergy-return.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
-
-  @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
-  }
   
   //create user after registration
   @Post('create-user')
@@ -33,18 +28,13 @@ export class AuthController {
   async createUser(@Body() createUserDto: CreateUserDto, @Req() req) {
     return this.authService.createUser(
       createUserDto,
-      (req as { user: JwtStrategyReturnDto }).user.userId,
+      (req as { user: JwtStrategyReturnDto }).user.userId
     );
   }
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
-  }
-
-  @Post('refresh')
-  async refreshToken(@Body() body: { refresh_token: string }) {
-    return this.authService.refreshToken(body.refresh_token);
   }
 
   @Get('me')
