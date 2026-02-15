@@ -19,7 +19,6 @@ import { ApplicationStatus } from '@prisma/client';
 import { PaginatioApplicationnQueryDto } from './dto/pagination.dto';
 import type { AuthUser } from 'src/auth/types';
 
-
 @Controller('applications')
 export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) {}
@@ -49,8 +48,11 @@ export class ApplicationsController {
   @Get('agent')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.AGENT)
-  getApplicationsByAgent(@Query() query: PaginatioApplicationnQueryDto, @CurrentUser() user: AuthUser | undefined) {
-    return this.applicationsService.getApplicationsByAgent(query,user?.userId);
+  getApplicationsByAgent(
+    @Query() query: PaginatioApplicationnQueryDto,
+    @CurrentUser() user: AuthUser | undefined,
+  ) {
+    return this.applicationsService.getApplicationsByAgent(query, user?.userId);
   }
 
   @Get('count')

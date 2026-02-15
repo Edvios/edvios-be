@@ -5,4 +5,3 @@ export class CreateNotificationDto {
   @IsString()
   message: string;
 }
-

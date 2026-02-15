@@ -35,7 +35,7 @@ export class RoleGuard implements CanActivate {
 
     let userRole = user.role;
     // Treat SELECTED_AGENT as AGENT for role checking
-    if(userRole === UserRole.SELECTED_AGENT){
+    if (userRole === UserRole.SELECTED_AGENT) {
       userRole = UserRole.AGENT;
     }
 

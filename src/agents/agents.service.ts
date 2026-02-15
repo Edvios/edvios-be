@@ -193,7 +193,7 @@ export class AgentsService {
             firstName: true,
             lastName: true,
             email: true,
-            phone: true
+            phone: true,
           },
         },
         agent: {
@@ -204,11 +204,10 @@ export class AgentsService {
                 firstName: true,
                 lastName: true,
                 email: true,
-                phone: true
-              }
-            }
+                phone: true,
+              },
+            },
           },
-
         },
       },
     });
@@ -358,8 +357,7 @@ export class AgentsService {
         officeAddressProof: agent.officeAddressProof ?? undefined,
         registeredWithEducationCouncils:
           agent.registeredWithEducationCouncils ?? false,
-        workingWithUkInstitutions:
-          agent.workingWithUkInstitutions ?? false,
+        workingWithUkInstitutions: agent.workingWithUkInstitutions ?? false,
         workingWithCanadaInstitutions:
           agent.workingWithCanadaInstitutions ?? false,
         workingWithAustraliaInstitutions:
