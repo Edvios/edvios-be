@@ -247,9 +247,7 @@ export class StudentsService {
 
       // English test
       overallScore: dto.overallScore ?? null,
-      testExpiryDate: dto.testExpiryDate
-        ? new Date(dto.testExpiryDate)
-        : null,
+      testExpiryDate: dto.testExpiryDate ? new Date(dto.testExpiryDate) : null,
 
       // Study preferences
       intendedIntakeMonth: dto.intendedIntakeMonth ?? null,
@@ -281,7 +279,9 @@ export class StudentsService {
     return data;
   }
 
-  private mapStudentUpdateData(dto: UpdateStudentDto): Prisma.StudentUpdateInput {
+  private mapStudentUpdateData(
+    dto: UpdateStudentDto,
+  ): Prisma.StudentUpdateInput {
     const data: Prisma.StudentUpdateInput = {};
 
     // Personal info
@@ -347,8 +347,7 @@ export class StudentsService {
       data.previousVisaRefusal = dto.previousVisaRefusal;
     if (dto.visaRefusalDetails !== undefined)
       data.visaRefusalDetails = dto.visaRefusalDetails;
-    if (dto.travelHistory !== undefined)
-      data.travelHistory = dto.travelHistory;
+    if (dto.travelHistory !== undefined) data.travelHistory = dto.travelHistory;
     if (dto.ongoingImmigrationApps !== undefined)
       data.ongoingImmigrationApps = dto.ongoingImmigrationApps;
 

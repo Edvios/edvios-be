@@ -14,11 +14,7 @@ import { RoleGuard } from 'src/auth/guards/role.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
-import {
-  CreateChatDto,
-  GetMessagesQueryDto,
-  UpdateMessageStatusDto,
-} from './dto';
+import { GetMessagesQueryDto, UpdateMessageStatusDto } from './dto';
 
 // Local interface matching ChatUser to avoid decorator metadata issues
 interface ChatUser {
@@ -32,13 +28,12 @@ interface ChatUser {
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-
   /**
    * Get all chats for the current user
    */
   @Get()
   async getUserChats(@CurrentUser() user: ChatUser) {
-    return this.chatService.getUserChats(user.userId, user.role);
+    return this.chatService.getUserChats(user.userId);
   }
 
   /**
