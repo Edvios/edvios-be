@@ -16,6 +16,7 @@ import { ApplicationsModule } from './applications/applications.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { DocumentsModule } from './documents/documents.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { DocumentsModule } from './documents/documents.module';
     ApplicationsModule,
     NotificationsModule,
     DocumentsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

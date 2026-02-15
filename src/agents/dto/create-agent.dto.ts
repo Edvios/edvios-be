@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsBoolean, IsInt, IsArray } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsArray,
+} from 'class-validator';
 import { FeatureType, ServiceType } from '@prisma/client';
 
 export class CreateAgentDto {
@@ -108,49 +114,49 @@ export class CreateAgentDto {
 export class AgentRegisterDto extends CreateAgentDto {}
 
 export class AgentProfileData {
-    id?: string;
+  id?: string;
 
-    // Company information
-    legalName?: string;
-    tradingName?: string | null;
-    agentName?: string;
-    calendlyLink?: string | null;
-    countryOfRegistration?: string;
-    yearEstablished?: number | null;
-    websiteUrl?: string | null;
+  // Company information
+  legalName?: string;
+  tradingName?: string | null;
+  agentName?: string;
+  calendlyLink?: string | null;
+  countryOfRegistration?: string;
+  yearEstablished?: number | null;
+  websiteUrl?: string | null;
 
-    // Contact information
-    officeAddress?: string;
-    contactPersonName?: string;
-    designation?: string | null;
-    officialEmail?: string;
-    phoneNumber?: string;
+  // Contact information
+  officeAddress?: string;
+  contactPersonName?: string;
+  designation?: string | null;
+  officialEmail?: string;
+  phoneNumber?: string;
 
-    // Registration documents
-    businessRegistrationNumber?: string;
-    businessRegistrationCertificate?: string | null;
-    officeAddressProof?: string | null;
+  // Registration documents
+  businessRegistrationNumber?: string;
+  businessRegistrationCertificate?: string | null;
+  officeAddressProof?: string | null;
 
-    // Partnerships & accreditations
-    registeredWithEducationCouncils?: boolean;
-    workingWithUkInstitutions?: boolean;
-    workingWithCanadaInstitutions?: boolean;
-    workingWithAustraliaInstitutions?: boolean;
+  // Partnerships & accreditations
+  registeredWithEducationCouncils?: boolean;
+  workingWithUkInstitutions?: boolean;
+  workingWithCanadaInstitutions?: boolean;
+  workingWithAustraliaInstitutions?: boolean;
 
-    // Business details
-    primaryStudentMarkets?: string[];
-    averageStudentsPerYearLast2Years?: number | null;
-    mainDestinations?: string[];
-    typicalStudentProfileStrength?: string | null;
+  // Business details
+  primaryStudentMarkets?: string[];
+  averageStudentsPerYearLast2Years?: number | null;
+  mainDestinations?: string[];
+  typicalStudentProfileStrength?: string | null;
 
-    // Services
-    inHouseVisaSupport?: boolean;
-    numberOfCounsellors?: number;
-    servicesProvided?: ServiceType[];
+  // Services
+  inHouseVisaSupport?: boolean;
+  numberOfCounsellors?: number;
+  servicesProvided?: ServiceType[];
 
-    // Platform usage
-    reasonToUseEdvios?: string | null;
-    interestedFeatures?: FeatureType[];
-    agentTier?: string;
-    notes?: string | null;
+  // Platform usage
+  reasonToUseEdvios?: string | null;
+  interestedFeatures?: FeatureType[];
+  agentTier?: string;
+  notes?: string | null;
 }

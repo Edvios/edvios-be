@@ -8,7 +8,8 @@ import {
   Param,
   UnauthorizedException,
   Req,
-  Delete
+  Delete,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginDto, RegisterDto } from './dto';
@@ -79,5 +80,15 @@ export class AuthController {
   @Roles(UserRole.ADMIN)
   async rejectAgent(@Param('userId') userId: string) {
     return this.authService.deleteUser(userId);
+  }
+
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body('email') email: string) {
+    return this.authService.resendVerificationEmail(email);
   }
 }

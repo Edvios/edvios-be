@@ -25,4 +25,3 @@ describe('NotificationsController', () => {
     expect(controller).toBeDefined();
   });
 });
-

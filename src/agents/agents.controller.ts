@@ -1,9 +1,18 @@
-import { Controller, Get, UseGuards, Query, Patch, Param, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Query,
+  Patch,
+  Param,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RoleGuard } from 'src/auth/guards/role.guard';
-import { User, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { agentsGetQueryDto } from './dto/get-agent-query.dto';
 import { CurrentUser } from 'src/auth/decorators';
 import { AuthUser } from 'src/auth/types';
@@ -23,14 +32,20 @@ export class AgentsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async createAgent(@CurrentUser() user: AuthUser | undefined, @Body() agent: AgentRegisterDto) {
+  async createAgent(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() agent: AgentRegisterDto,
+  ) {
     return this.agentsService.createAgent(user, agent);
   }
 
   @Patch()
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.AGENT)
-  async updateAgent(@CurrentUser() user: AuthUser | undefined, @Body() agent: AgentProfileData) {
+  async updateAgent(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() agent: AgentProfileData,
+  ) {
     return this.agentsService.updateAgent(user, agent);
   }
 
@@ -97,7 +112,10 @@ export class AgentsController {
   @Patch('change-assignment/:assignmentId/agent/:agentId')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
-  async changeAgentAssignment(@Param('assignmentId') assignmentId: string, @Param('agentId') agentId: string) {
+  async changeAgentAssignment(
+    @Param('assignmentId') assignmentId: string,
+    @Param('agentId') agentId: string,
+  ) {
     return this.agentsService.changeAgentAssignment(assignmentId, agentId);
   }
     @Get(':id')

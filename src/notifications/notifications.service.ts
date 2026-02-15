@@ -6,7 +6,9 @@ import { PrismaService } from '../prisma/prisma.service';
 export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createStudentNotification(createNotificationDto: CreateNotificationDto) {
+  async createStudentNotification(
+    createNotificationDto: CreateNotificationDto,
+  ) {
     return this.prisma.studentNotification.create({
       data: {
         message: createNotificationDto.message,
@@ -38,4 +40,3 @@ export class NotificationsService {
     });
   }
 }
-

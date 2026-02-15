@@ -112,12 +112,11 @@ export class ChatService {
   /**
    * Get all chats for a user (student or agent)
    */
-  async getUserChats(userId: string, userRole?: UserRole) {
+  async getUserChats(userId: string) {
     // Check both columns to handle cases where role might be ambiguous in token
     const whereClause = {
       OR: [{ studentId: userId }, { agentId: userId }],
     };
-
 
     const chats = await this.prisma.agentAssignment.findMany({
       where: whereClause,
@@ -242,7 +241,7 @@ export class ChatService {
     const whereClause: { chatId: string; createdAt?: { lt: Date } } = {
       chatId,
     };
-    
+
     if (before) {
       const beforeMessage = await this.prisma.chatMessage.findUnique({
         where: { id: before },

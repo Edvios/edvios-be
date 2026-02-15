@@ -358,8 +358,7 @@ export class AgentsService {
         officeAddressProof: agent.officeAddressProof ?? undefined,
         registeredWithEducationCouncils:
           agent.registeredWithEducationCouncils ?? false,
-        workingWithUkInstitutions:
-          agent.workingWithUkInstitutions ?? false,
+        workingWithUkInstitutions: agent.workingWithUkInstitutions ?? false,
         workingWithCanadaInstitutions:
           agent.workingWithCanadaInstitutions ?? false,
         workingWithAustraliaInstitutions:
