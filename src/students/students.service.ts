@@ -8,10 +8,18 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { Prisma, UserRole } from '@prisma/client';
 import { studentsGetQueryDto } from './dto/student-query.dto';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Injectable()
 export class StudentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly supabaseService: SupabaseService,
+  ) {}
+
+  private get supabaseAdmin() {
+    return this.supabaseService.adminClient;
+  }
 
   async create(dto: CreateStudentDto, creatorUserId: string) {
     const studentData = this.mapStudentCreateData(dto);
@@ -22,57 +30,101 @@ export class StudentsService {
       );
     }
 
-    // Verify user exists
-    const exists = await this.prisma.user.findUnique({
-      where: { id: creatorUserId },
-    });
-    if (!exists) {
-      throw new NotFoundException(`User ${creatorUserId} not found`);
-    }
+    // 1. Run all DB operations in a transaction
+    const student = await this.prisma.$transaction(async (tx) => {
+      // Verify user exists
+      const exists = await tx.user.findUnique({
+        where: { id: creatorUserId },
+      });
+      if (!exists) {
+        throw new NotFoundException(`User ${creatorUserId} not found`);
+      }
 
-    // Check if student profile already exists for this user
-    const existingStudent = await this.prisma.student.findUnique({
-      where: { id: creatorUserId },
-    });
-    if (existingStudent) {
-      throw new BadRequestException(
-        `Student profile already exists for user ${creatorUserId}`,
-      );
-    }
+      // Update role in Prisma database
+      await tx.user.update({
+        where: { id: creatorUserId },
+        data: { role: UserRole.STUDENT },
+      });
 
-    const student = await this.prisma.student.create({
-      data: {
-        ...studentData,
-        user: {
-          connect: { id: creatorUserId },
+      // Check if student profile already exists for this user
+      const existingStudent = await tx.student.findUnique({
+        where: { id: creatorUserId },
+      });
+      if (existingStudent) {
+        throw new BadRequestException(
+          `Student profile already exists for user ${creatorUserId}`,
+        );
+      }
+
+      const created = await tx.student.create({
+        data: {
+          ...studentData,
+          user: { connect: { id: creatorUserId } },
         },
-      },
-      include: { user: true },
+        include: { user: true },
+      });
+
+      // If there are academic certificates, create document records for them
+      if (dto.academicCertificates && dto.academicCertificates.length > 0) {
+        const documentData = dto.academicCertificates.map((url) => ({
+          name: "Academic Certificate",
+          type: 'academic_certificate',
+          url,
+          userId: creatorUserId,
+        }));
+        await tx.document.createMany({
+          data: documentData,
+        });
+      }
+
+      const agent = await tx.user.findMany({
+        where: { role: UserRole.SELECTED_AGENT },
+        select: { id: true },
+      });
+
+   
+      if (agent.length === 0) {
+        throw new BadRequestException('No SELECTED_AGENT found');
+      }
+
+      await this.assignAgentToStudent(created.id, agent[0].id, tx);
+
+      return created;
     });
 
-    const agent = await this.prisma.user.findMany({
-      where: { role: UserRole.SELECTED_AGENT },
-      select: { id: true },
-    });
+    // 2. Update Supabase metadata AFTER transaction commits
+    //    If this fails, the DB changes are already committed and safe.
+    try {
+      const { error: updateError } =
+        await this.supabaseAdmin.auth.admin.updateUserById(student.id, {
+          user_metadata: {
+            role: UserRole.STUDENT,
+          },
+        });
 
-    if (agent.length === 0) {
-      throw new BadRequestException('No SELECTED_AGENT found');
+      if (updateError) {
+        console.error('Supabase metadata update failed:', updateError);
+      }
+    } catch (err) {
+      console.error('Supabase metadata update threw:', err);
     }
-
-    await this.assignAgentToStudent(student.id, agent[0].id);
 
     return student;
   }
 
-  async assignAgentToStudent(studentId: string, agentId: string) {
+  async assignAgentToStudent(
+    studentId: string,
+    agentId: string,
+    prismaClient: Prisma.TransactionClient = this.prisma,
+  ) {
     // Ensure both student and agent exist
-    const student = await this.prisma.student.findUnique({
+    const student = await prismaClient.student.findUnique({
       where: { id: studentId },
     });
     if (!student) {
       throw new NotFoundException(`Student ${studentId} not found`);
     }
-    const agent = await this.prisma.user.findUnique({
+    const agent = await prismaClient.user.findUnique({
       where: { id: agentId },
     });
 
@@ -80,7 +132,7 @@ export class StudentsService {
       throw new NotFoundException(`Agent ${agentId} not found or not valid`);
     }
     // Assign agent to student
-    return this.prisma.agentAssignment.create({
+    return prismaClient.agentAssignment.create({
       data: {
         studentId,
         agentId,

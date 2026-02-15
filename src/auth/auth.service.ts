@@ -4,111 +4,24 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, LoginDto, RegisterDto } from './dto';
-import {
-  AuthResponse,
-  createClient,
-  SupabaseClient,
-} from '@supabase/supabase-js';
-import { UserRole, UserStatus } from '@prisma/client';
-import { MailService } from '../mail/mail.service';
-import { generateVerificationToken } from './utils/auth-token.util';
+import { CreateUserDto, LoginDto } from './dto';
+import { AuthResponse } from '@supabase/supabase-js';
+import { UserRole } from '@prisma/client';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Injectable()
 export class AuthService {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  private readonly supabase: SupabaseClient = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-  );
-
   constructor(
-    private prisma: PrismaService,
-    private mailService: MailService,
+    private readonly prisma: PrismaService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
-  async register(registerDto: RegisterDto) {
-    console.log('AuthService.register called for:', registerDto.email);
-    const { email, password, firstName, lastName, role, phone } = registerDto;
+  private get supabase() {
+    return this.supabaseService.client;
+  }
 
-    try {
-      // 1. Check if user already exists in our local database
-      const existingUser = await this.prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (existingUser) {
-        throw new BadRequestException(
-          'A user with this email already exists. Please try logging in or use a different email.',
-        );
-      }
-
-      const { data, error }: AuthResponse = await this.supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            firstName,
-            lastName,
-            role,
-          },
-        },
-      });
-
-      if (error) {
-        console.error('Supabase signUp error:', error);
-        throw new BadRequestException(error.message);
-      }
-
-      if (!data.user) {
-        console.error('Supabase user is null');
-        throw new BadRequestException('User creation failed in Supabase');
-      }
-
-      // Generate verification token
-      const tokenData = generateVerificationToken();
-
-      try {
-        // Create user in our database with ACTIVE status (but emailVerified: false)
-        await this.prisma.user.create({
-          data: {
-            id: data.user.id,
-            email,
-            firstName,
-            lastName,
-            role,
-            phone: phone ?? null,
-            status: UserStatus.ACTIVE,
-            emailVerified: false,
-            verificationToken: tokenData.token,
-            verificationTokenExpires: tokenData.expires,
-          },
-        });
-      } catch (prismaError) {
-        console.error('Prisma creation error:', prismaError);
-        throw new BadRequestException(
-          'Failed to create user in local database',
-        );
-      }
-
-      // Send verification email - await it to ensure it finishes or fails visibly
-      try {
-        await this.mailService.sendVerificationEmail(email, tokenData.token);
-      } catch (err) {
-        console.error(`Failed to send verification email to ${email}:`, err);
-        // Note: we don't throw here to avoid failing registration if only email fails
-        // but since we await it, the error will be logged.
-      }
-
-      return {
-        message:
-          'User registered successfully. Please check your email to verify your account.',
-      };
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Registration failed';
-      throw new BadRequestException(message);
-    }
+  private get supabaseAdmin() {
+    return this.supabaseService.adminClient;
   }
 
   async createUser(createUserDto: CreateUserDto, creatorUserId: string) {
@@ -235,26 +148,6 @@ export class AuthService {
     }
   }
 
-  async refreshToken(refreshToken: string) {
-    try {
-      const { data, error }: AuthResponse =
-        await this.supabase.auth.refreshSession({
-          refresh_token: refreshToken,
-        });
-
-      if (error || !data.session) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      return {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      };
-    } catch {
-      throw new UnauthorizedException('Token refresh failed');
-    }
-  }
-
   async getUserById(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -285,14 +178,8 @@ export class AuthService {
         data: { role: newRole },
       });
 
-      // Update user metadata in Supabase Auth with service role key
-      const supabaseAdmin = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      );
-
       const { error: updateError } =
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
+        await this.supabaseAdmin.auth.admin.updateUserById(userId, {
           user_metadata: {
             role: newRole,
           },
@@ -323,14 +210,14 @@ export class AuthService {
   }
 
   async deleteUser(userId: string) {
-    const supabaseAdmin = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    // const supabaseAdmin = createClient(
+    //   process.env.SUPABASE_URL!,
+    //   process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    // );
 
     try {
       const { error: supabaseError } =
-        await supabaseAdmin.auth.admin.deleteUser(userId);
+        await this.supabaseAdmin.auth.admin.deleteUser(userId);
 
       if (supabaseError) {
         throw new Error(supabaseError.message);
