@@ -36,6 +36,8 @@ emailVerified             Boolean    @default(false)
 
   documents Document[]
 
+  documents Document[]
+
   @@map("users")
 }
 

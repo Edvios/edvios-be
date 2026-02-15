@@ -193,7 +193,7 @@ export class AgentsService {
             firstName: true,
             lastName: true,
             email: true,
-            phone: true,
+            phone: true
           },
         },
         agent: {
@@ -204,10 +204,11 @@ export class AgentsService {
                 firstName: true,
                 lastName: true,
                 email: true,
-                phone: true,
-              },
-            },
+                phone: true
+              }
+            }
           },
+
         },
       },
     });

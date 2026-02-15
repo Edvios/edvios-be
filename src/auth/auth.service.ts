@@ -13,7 +13,7 @@ import {
 import { UserRole, UserStatus } from '@prisma/client';
 import { MailService } from '../mail/mail.service';
 import { generateVerificationToken } from './utils/auth-token.util';
-import { SupabaseService } from 'src/supabase';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Injectable()
 export class AuthService {
@@ -184,12 +184,6 @@ export class AuthService {
         where: { id: userId },
         data: { role: newRole },
       });
-
-      // Update user metadata in Supabase Auth with service role key
-      // const supabaseAdmin = createClient(
-      //   process.env.SUPABASE_URL!,
-      //   process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      // );
 
       const { error: updateError } =
         await this.supabaseAdmin.auth.admin.updateUserById(userId, {
