@@ -4,15 +4,22 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, LoginDto } from './dto';
-import { AuthResponse } from '@supabase/supabase-js';
-import { UserRole } from '@prisma/client';
-import { SupabaseService } from '../supabase/supabase.service';
+import { CreateUserDto, LoginDto} from './dto';
+import {
+  AuthResponse,
+  createClient,
+  SupabaseClient,
+} from '@supabase/supabase-js';
+import { UserRole, UserStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
+import { generateVerificationToken } from './utils/auth-token.util';
+import { SupabaseService } from 'src/supabase';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
+    private prisma: PrismaService,
+    private mailService: MailService,
     private readonly supabaseService: SupabaseService,
   ) {}
 
@@ -177,6 +184,12 @@ export class AuthService {
         where: { id: userId },
         data: { role: newRole },
       });
+
+      // Update user metadata in Supabase Auth with service role key
+      // const supabaseAdmin = createClient(
+      //   process.env.SUPABASE_URL!,
+      //   process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      // );
 
       const { error: updateError } =
         await this.supabaseAdmin.auth.admin.updateUserById(userId, {
