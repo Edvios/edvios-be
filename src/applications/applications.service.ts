@@ -19,7 +19,7 @@ export class ApplicationsService {
     const skip = (page - 1) * size;
     const take = size;
 
-    const [applications,total] = await Promise.all([
+    const [applications, total] = await Promise.all([
       this.prisma.application.findMany({
         where,
         skip,
@@ -28,11 +28,13 @@ export class ApplicationsService {
       }),
       this.prisma.application.count({ where }),
     ]);
-    return {applications, total,page};
+    return { applications, total, page };
   }
 
-  async getApplicationsByAgent(query: PaginatioApplicationnQueryDto, userId: string | undefined) {
-
+  async getApplicationsByAgent(
+    query: PaginatioApplicationnQueryDto,
+    userId: string | undefined,
+  ) {
     if (!userId) {
       throw new Error('User ID is required');
     }
@@ -61,7 +63,7 @@ export class ApplicationsService {
 
     const studentIds = students.map((s) => s.studentId);
 
-    const [applications,total] = await Promise.all([
+    const [applications, total] = await Promise.all([
       this.prisma.application.findMany({
         where: {
           ...where,
@@ -74,13 +76,11 @@ export class ApplicationsService {
       this.prisma.application.count({
         where: {
           ...where,
-          studentId: { in: studentIds },  
+          studentId: { in: studentIds },
         },
       }),
     ]);
-    return {applications, total,page};
-      
-
+    return { applications, total, page };
   }
 
   //create a new application

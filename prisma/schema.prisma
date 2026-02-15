@@ -29,7 +29,9 @@ model User {
   phone     String?
   agent     Agent?
   student   Student?
-
+emailVerified             Boolean    @default(false)
+  verificationToken         String?    @unique
+  verificationTokenExpires  DateTime?
   documents Document[]
 
   @@map("users")

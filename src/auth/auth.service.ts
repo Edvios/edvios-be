@@ -4,15 +4,22 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, LoginDto } from './dto';
-import { AuthResponse } from '@supabase/supabase-js';
-import { UserRole } from '@prisma/client';
-import { SupabaseService } from '../supabase/supabase.service';
+import { CreateUserDto, LoginDto} from './dto';
+import {
+  AuthResponse,
+  createClient,
+  SupabaseClient,
+} from '@supabase/supabase-js';
+import { UserRole, UserStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
+import { generateVerificationToken } from './utils/auth-token.util';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
+    private prisma: PrismaService,
+    private mailService: MailService,
     private readonly supabaseService: SupabaseService,
   ) {}
 
@@ -25,7 +32,16 @@ export class AuthService {
   }
 
   async createUser(createUserDto: CreateUserDto, creatorUserId: string) {
+    console.log(
+      'AuthService.createUser called for:',
+      createUserDto.email,
+      'userId:',
+      creatorUserId,
+    );
     const { email, firstName, lastName, role, phone } = createUserDto;
+
+    // Generate verification token
+    const tokenData = generateVerificationToken();
 
     try {
       const user = await this.prisma.user.create({
@@ -36,11 +52,25 @@ export class AuthService {
           lastName,
           role,
           phone: phone ?? null,
+          status: UserStatus.ACTIVE,
+          emailVerified: false,
+          verificationToken: tokenData.token,
+          verificationTokenExpires: tokenData.expires,
         },
       });
 
+      console.log('User created in DB, sending email to:', email);
+      // Send verification email
+      try {
+        await this.mailService.sendVerificationEmail(email, tokenData.token);
+        console.log('Verification email sent successfully to:', email);
+      } catch (err) {
+        console.error(`Failed to send verification email to ${email}:`, err);
+      }
+
       return {
-        message: 'User registered successfully',
+        message:
+          'User registered successfully. Please check your email to verify your account.',
         user: {
           id: user.id,
           email: user.email,
@@ -51,8 +81,8 @@ export class AuthService {
         },
       };
     } catch (error) {
-      console.error('Supabase createUser error:', error);
-      throw new BadRequestException(error);
+      console.error('Prisma createUser error:', error);
+      throw new BadRequestException('Failed to create user in local database');
     }
   }
 
@@ -73,6 +103,41 @@ export class AuthService {
 
       if (!data.session) {
         throw new UnauthorizedException('No session returned');
+      }
+
+      // Check if email is verified in our database
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.user!.id },
+      });
+
+      if (user && !user.emailVerified) {
+        console.log(
+          'Unverified user attempt to login:',
+          email,
+          'Sending new email.',
+        );
+        // Send new verification email if they try to login while unverified
+        const tokenData = generateVerificationToken();
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            verificationToken: tokenData.token,
+            verificationTokenExpires: tokenData.expires,
+          },
+        });
+
+        try {
+          await this.mailService.sendVerificationEmail(email, tokenData.token);
+          console.log('Verification email resent on login to:', email);
+        } catch (err) {
+          console.error('Failed to send verification email on login:', err);
+        }
+
+        // Sign the user out of Supabase if they aren't verified in our DB
+        await this.supabase.auth.signOut();
+        throw new UnauthorizedException(
+          'Email not verified. A new verification link has been sent to your email.',
+        );
       }
 
       return {
@@ -165,10 +230,8 @@ export class AuthService {
         throw new Error(supabaseError.message);
       }
 
-      await this.prisma.$transaction(async (tx) => {
-        await tx.user.delete({
-          where: { id: userId },
-        });
+      await this.prisma.user.delete({
+        where: { id: userId },
       });
 
       return { message: 'User deleted successfully' };
@@ -194,5 +257,66 @@ export class AuthService {
       },
     });
     return { newUsersCount: count };
+  }
+
+  async verifyEmail(token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { verificationToken: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    if (
+      user.verificationTokenExpires &&
+      user.verificationTokenExpires < new Date()
+    ) {
+      throw new BadRequestException('Verification token has expired');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        verificationToken: null,
+        verificationTokenExpires: null,
+      },
+    });
+    return { message: 'Email verified successfully. You can now log in.' };
+  }
+
+  async resendVerificationEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    const { token: verificationToken, expires: verificationTokenExpires } =
+      generateVerificationToken();
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verificationToken,
+        verificationTokenExpires,
+      },
+    });
+
+    // Send verification email
+    try {
+      await this.mailService.sendVerificationEmail(email, verificationToken);
+    } catch (err) {
+      console.error(`Failed to resend verification email to ${email}:`, err);
+    }
+
+    return { message: 'Verification email has been resent.' };
   }
 }

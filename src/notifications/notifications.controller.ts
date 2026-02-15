@@ -7,14 +7,18 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Post('student')
-  createStudentNotification(@Body() createNotificationDto: CreateNotificationDto) {
+  createStudentNotification(
+    @Body() createNotificationDto: CreateNotificationDto,
+  ) {
     return this.notificationsService.createStudentNotification(
       createNotificationDto,
     );
   }
 
   @Post('agent')
-  createAgentNotification(@Body() createNotificationDto: CreateNotificationDto) {
+  createAgentNotification(
+    @Body() createNotificationDto: CreateNotificationDto,
+  ) {
     return this.notificationsService.createAgentNotification(
       createNotificationDto,
     );
@@ -30,4 +34,3 @@ export class NotificationsController {
     return this.notificationsService.findAllAgentNotifications();
   }
 }
-
