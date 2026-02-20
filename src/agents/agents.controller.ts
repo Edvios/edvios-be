@@ -118,4 +118,14 @@ export class AgentsController {
   ) {
     return this.agentsService.changeAgentAssignment(assignmentId, agentId);
   }
+    @Get(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async getAgentByIdAdmin(@Param('id') id: string) {
+    return this.agentsService.getAgentByIdAdmin(id);
+  }
+
+
+
+
 }

@@ -399,4 +399,29 @@ export class AgentsService {
     }
     return assignment.agent.calendlyLink;
   }
+
+    async getAgentByIdAdmin(id: string) {
+    const agent = await this.prisma.agent.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!agent) {
+      // If no agent record exists yet, just return the user record
+      const user = await this.prisma.user.findUnique({
+        where: { id }
+      });
+      if (!user) {
+        throw new Error(`User with ID ${id} not found`);
+      }
+      return user;
+    }
+
+    return {
+      ...agent.user,
+      ...agent,
+      id: agent.id,
+    };
+  }
+
 }
